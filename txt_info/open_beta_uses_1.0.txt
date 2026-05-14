@@ -1,0 +1,857 @@
+================================================================================
+          SATELLITE LINK SIMULATOR — OPEN BETA v1.0 — FILE & MODULE REFERENCE
+================================================================================
+                          Generated: February 12, 2026
+================================================================================
+
+
+TABLE OF CONTENTS
+─────────────────
+  1. Root-Level Files
+  2. assets/
+  3. gui/core/            — Core reusable widgets
+  4. gui/panels/           — Header & dashboard panels
+  5. gui/visualizations/   — All 8 visualization tabs
+  6. gui/hub/              — Base station & satellite management
+  7. gui/dialogs/          — Info, math, history dialogs
+  8. gui/utils/            — Export, save/load, presets
+  9. gui/advanced_analysis/— IEEE-quality advanced analysis
+ 10. gui/ (root)           — 3D Earth visualization
+ 11. pdfs/models/          — Core computation engine
+ 12. pdfs/ (root)          — Legacy scripts & reference docs
+ 13. Architecture Diagram
+
+
+
+================================================================================
+ 1. ROOT-LEVEL FILES
+================================================================================
+
+┌─────────────────────────────────────┬────────────────────────────────────────┐
+│ File                                │ Use                                    │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ main_advanced.py                    │ PRIMARY ENTRY POINT. The main          │
+│   (~3100 lines)                     │ application window. Orchestrates all   │
+│                                     │ GUI modules, contains the core link    │
+│                                     │ budget calculation, control panel,     │
+│                                     │ stylesheet, and setup logic.           │
+│                                     │ Run: python main_advanced.py           │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ main.py                             │ ORIGINAL (BASIC) GUI. Older monolithic │
+│   (~579 lines)                      │ version with simpler single-panel      │
+│                                     │ interface. Kept for reference.         │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ requirements.txt                    │ Python package dependencies list.      │
+│                                     │ Includes: PyQt5, numpy, scipy,        │
+│                                     │ matplotlib, pyqtgraph, pyvista,       │
+│                                     │ pyvistaqt, skyfield, pandas, seaborn. │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ install.ps1                         │ PowerShell installer script. Checks    │
+│                                     │ Python, creates virtual environment,   │
+│                                     │ installs all dependencies.             │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ run_advanced.ps1                    │ PowerShell launcher. Activates venv    │
+│                                     │ and runs main_advanced.py.             │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ README.md                           │ Bilingual (Greek/English) docs.        │
+│                                     │ Features, installation, shortcuts,     │
+│                                     │ system requirements, file structure.   │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ orbit_defaults_sources.txt          │ Reference document with sourced        │
+│                                     │ justification for all orbit-type       │
+│                                     │ defaults (GEO/LEO/MEO/HEO) with       │
+│                                     │ ITU-R, FCC, and textbook citations.    │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ link_budget_report_*.txt            │ Sample exported link budget report.    │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ pyqt5_animations_example.py         │ STANDALONE EXAMPLE. Demonstrates       │
+│                                     │ animated PyQt5 buttons/cards with      │
+│                                     │ hover effects and slide animations.    │
+│                                     │ Not used by the main application.      │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ qml_example.qml                     │ QML PROTOTYPE. Declarative UI concept  │
+│                                     │ for a satellite simulator. Reference   │
+│                                     │ file only, not used by the app.        │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ react_python_bridge_example.js      │ JAVASCRIPT EXAMPLE. Shows React-to-   │
+│                                     │ Python bridging via QWebChannel.       │
+│                                     │ Reference file only.                   │
+└─────────────────────────────────────┴────────────────────────────────────────┘
+
+
+
+================================================================================
+ 2. ASSETS
+================================================================================
+
+┌─────────────────────────────────────┬────────────────────────────────────────┐
+│ File                                │ Use                                    │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ assets/arrow_down.png               │ Down-arrow icon for dashboard cards.   │
+│ assets/arrow_down_red.png           │ Red down-arrow (negative delta).       │
+│ assets/arrow_up_green.png           │ Green up-arrow (positive delta).       │
+│ assets/itu_map.jpeg                 │ ITU rain-zone world map image.         │
+│ assets/satellite_icon.ico           │ Application window icon.               │
+└─────────────────────────────────────┴────────────────────────────────────────┘
+
+
+
+================================================================================
+ 3. gui/core/ — CORE REUSABLE WIDGETS
+================================================================================
+
+┌─────────────────────────────────────┬────────────────────────────────────────┐
+│ File                                │ Use                                    │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/core/__init__.py                │ Package init. Re-exports MplCanvas.    │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/core/mpl_canvas.py              │ REUSABLE MATPLOTLIB CANVAS WIDGET.     │
+│                                     │ Embeds matplotlib Figure inside a      │
+│                                     │ PyQt5 widget. Used by every            │
+│                                     │ visualization tab for plotting.        │
+│                                     │                                        │
+│                                     │ Exports: MplCanvas(FigureCanvasQTAgg)  │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/core/splash_screen.py           │ SPLASH SCREEN FACTORY. Paints a        │
+│                                     │ gradient splash with app title and     │
+│                                     │ version info at startup. Also defines  │
+│                                     │ IEEE_COLORS color palette dict used    │
+│                                     │ throughout the UI.                     │
+│                                     │                                        │
+│                                     │ Exports: create_splash_screen()        │
+│                                     │          IEEE_COLORS (dict)            │
+└─────────────────────────────────────┴────────────────────────────────────────┘
+
+
+
+================================================================================
+ 4. gui/panels/ — HEADER & DASHBOARD PANELS
+================================================================================
+
+┌─────────────────────────────────────┬────────────────────────────────────────┐
+│ File                                │ Use                                    │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/panels/__init__.py              │ Package init. Re-exports header and    │
+│                                     │ dashboard functions.                   │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/panels/header.py                │ GRADIENT HEADER TOOLBAR. Creates the   │
+│                                     │ top toolbar with app title, subtitle,  │
+│                                     │ and glassmorphism action buttons:      │
+│                                     │   • Calculate Link Budget              │
+│                                     │   • Presets dropdown                   │
+│                                     │   • Export Report / Export CSV         │
+│                                     │   • Save / Load Parameters             │
+│                                     │   • Pin Result / History               │
+│                                     │   • Info / Math Details                │
+│                                     │   • Advanced Analysis                  │
+│                                     │   • Copy to Clipboard                  │
+│                                     │   • Toggle Metrics Visibility          │
+│                                     │                                        │
+│                                     │ Called by: main_advanced.py setup_ui() │
+│                                     │                                        │
+│                                     │ Exports: create_header(mw)             │
+│                                     │          toggle_metrics_visibility(mw) │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/panels/dashboard.py             │ REAL-TIME METRIC DASHBOARD. Creates    │
+│                                     │ and updates glassmorphism metric cards │
+│                                     │ showing live values:                   │
+│                                     │   • C/N₀ (dB-Hz)                      │
+│                                     │   • Link Margin (dB)                   │
+│                                     │   • Eb/N₀ (dB)                        │
+│                                     │   • BER                               │
+│                                     │   • Availability (%)                   │
+│                                     │   • Elevation Angle (°)               │
+│                                     │ Also creates satellite tracking info   │
+│                                     │ cards (azimuth, slant range, doppler). │
+│                                     │                                        │
+│                                     │ Called by: main_advanced.py setup_ui() │
+│                                     │            and update_realtime()       │
+│                                     │                                        │
+│                                     │ Exports: create_dashboard_cards(mw)    │
+│                                     │          create_tracking_cards(mw)     │
+│                                     │          update_dashboard_cards(mw,    │
+│                                     │              results, params)          │
+│                                     │          update_tracking_cards(mw)     │
+└─────────────────────────────────────┴────────────────────────────────────────┘
+
+
+
+================================================================================
+ 5. gui/visualizations/ — ALL 8 VISUALIZATION TABS
+================================================================================
+
+┌─────────────────────────────────────┬────────────────────────────────────────┐
+│ File                                │ Use                                    │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/visualizations/__init__.py      │ Package init. Re-exports all           │
+│                                     │ visualization tab functions.           │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/visualizations/complete_link.py │ TAB: COMPLETE LINK BUDGET RESULTS.     │
+│   (~190 lines)                      │ Renders seaborn-styled matplotlib      │
+│                                     │ tables showing all uplink, downlink,   │
+│                                     │ and total link parameters with         │
+│                                     │ color-coded pass/fail margin cells.    │
+│                                     │                                        │
+│                                     │ Button/Tab: "Complete Link" tab        │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   create_complete_link_tab(mw)         │
+│                                     │   update_complete_results_text(mw,     │
+│                                     │       results, params)                 │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/visualizations/waterfall.py     │ TAB: WATERFALL DIAGRAM. Shows the      │
+│   (~15 lines, thin wrapper)         │ signal power cascading through each    │
+│                                     │ loss stage (EIRP → FSPL → rain →      │
+│                                     │ atmosphere → pointing → Rx).           │
+│                                     │ Delegates drawing to link_diagram.py.  │
+│                                     │                                        │
+│                                     │ Button/Tab: "Waterfall" tab            │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   create_waterfall_tab(mw)             │
+│                                     │   update_waterfall_diagram(mw,         │
+│                                     │       results, params)                 │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/visualizations/ber_curves.py    │ TAB: BER PERFORMANCE CURVES. Plots     │
+│   (~56 lines)                       │ theoretical Bit Error Rate vs Eb/N₀   │
+│                                     │ for 6 modulation schemes: BPSK, QPSK, │
+│                                     │ 8PSK, 16QAM, 16APSK, 32APSK. Marks   │
+│                                     │ the current operating point.           │
+│                                     │                                        │
+│                                     │ Button/Tab: "BER Curves" tab           │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   create_ber_tab(mw)                   │
+│                                     │   update_ber_plot(mw)                  │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/visualizations/constellation.py │ TAB: CONSTELLATION DIAGRAM. Shows      │
+│   (~97 lines)                       │ ideal + noisy I/Q constellation        │
+│                                     │ points for selected modulation &       │
+│                                     │ Eb/N₀ with EVM percentage readout.    │
+│                                     │                                        │
+│                                     │ Button/Tab: "Constellation" tab        │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   create_constellation_tab(mw)         │
+│                                     │   update_constellation(mw)             │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/visualizations/ground_track.py  │ TAB: GROUND TRACK / ORBIT. Plots      │
+│   (~82 lines)                       │ satellite sub-satellite-point trace    │
+│                                     │ on a 2D world map with ground station  │
+│                                     │ marker, coverage circle, and orbit     │
+│                                     │ path annotations.                      │
+│                                     │                                        │
+│                                     │ Button/Tab: "Ground Track" tab         │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   create_orbit_tab(mw)                 │
+│                                     │   update_orbit_plot(mw)                │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/visualizations/                 │ TAB: LINK DIAGRAM. Textbook-style      │
+│   link_diagram_view.py              │ schematic showing the GS↔Satellite    │
+│   (~32 lines, thin wrapper)         │ signal path with labeled gains,        │
+│                                     │ losses, and power levels at each       │
+│                                     │ stage. Has a "Clear Sky" toggle.       │
+│                                     │ Delegates to models/link_diagram.py.   │
+│                                     │                                        │
+│                                     │ Button/Tab: "Link Diagram" tab         │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   create_link_diagram_tab(mw)          │
+│                                     │   update_link_diagram_complete(mw,     │
+│                                     │       results, params)                 │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/visualizations/                 │ TAB: TRANSPONDER "BLACK BOX". Three-   │
+│   transponder_view.py               │ panel view of the satellite            │
+│   (~201 lines)                      │ transponder signal chain:              │
+│                                     │   1. Block diagram (Rx Ant → LNA →    │
+│                                     │      Mixer → IF Amp → PA → Tx Ant)    │
+│                                     │   2. Transfer curve (input vs output   │
+│                                     │      power with IBO/OBO markers)       │
+│                                     │   3. Noise cascade analysis (Friis     │
+│                                     │      cascaded noise figure)            │
+│                                     │                                        │
+│                                     │ Button/Tab: "Transponder" tab          │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   create_transponder_tab(mw)           │
+│                                     │   update_transponder_block_diagram(mw) │
+│                                     │   update_transponder_transfer_curve(mw)│
+│                                     │   update_transponder_noise_cascade(mw) │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/visualizations/view_3d.py       │ TAB: 3D EARTH VISUALIZATION. PyVista-  │
+│   (~418 lines)                      │ based 3D globe with:                   │
+│                                     │   • WGS-84 oblate spheroid Earth       │
+│                                     │   • Satellite meshes on orbit          │
+│                                     │   • Orbit trail lines (J2-perturbed)   │
+│                                     │   • Ground station markers             │
+│                                     │   • Uplink/downlink beam lines         │
+│                                     │   • Coverage footprint cones           │
+│                                     │   • Overlay playback controls:         │
+│                                     │     play/pause, rewind, fast-forward,  │
+│                                     │     speed selector, time display       │
+│                                     │   • Visibility toggles per object      │
+│                                     │ Falls back gracefully if PyVista       │
+│                                     │ is not installed.                      │
+│                                     │                                        │
+│                                     │ Button/Tab: "3D View" tab              │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   create_3d_tab(mw)                    │
+│                                     │   update_3d_view(mw)                   │
+│                                     │   + internal animation helpers         │
+└─────────────────────────────────────┴────────────────────────────────────────┘
+
+
+
+================================================================================
+ 6. gui/hub/ — BASE STATION & SATELLITE MANAGEMENT
+================================================================================
+
+┌─────────────────────────────────────┬────────────────────────────────────────┐
+│ File                                │ Use                                    │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/hub/__init__.py                 │ Package init (empty).                  │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/hub/hub_tab.py                  │ HUB MANAGEMENT TAB. Split-view panel   │
+│   (~218 lines)                      │ with two scrollable card lists:        │
+│                                     │   LEFT:  Base Stations (Add/Edit/Del)  │
+│                                     │   RIGHT: Satellites (Add/Edit/Del)     │
+│                                     │ Each item shown as a styled card with  │
+│                                     │ key parameters and action buttons.     │
+│                                     │                                        │
+│                                     │ Button/Tab: "Hub" tab                  │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   create_hub_tab(mw)                   │
+│                                     │   _refresh_hub_lists(mw)               │
+│                                     │   _refresh_hub_bs_list(mw)             │
+│                                     │   _refresh_hub_sat_list(mw)            │
+│                                     │   _create_bs_card(mw, bs, index)       │
+│                                     │   _create_sat_card(mw, sat, index)     │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/hub/dialogs.py                  │ CRUD DIALOGS for Hub items. Form       │
+│   (~357 lines)                      │ dialogs with full parameter editing:   │
+│                                     │                                        │
+│                                     │  Base Station dialog fields:           │
+│                                     │   • Name, Latitude, Longitude          │
+│                                     │   • Altitude, TX Power, Antenna Diam.  │
+│                                     │   • TX/RX Gain, LNA Temp, Losses      │
+│                                     │                                        │
+│                                     │  Satellite dialog fields:              │
+│                                     │   • Preset selector (Hotbird, Astra…)  │
+│                                     │   • Name, Orbit Type, Longitude/Alt.   │
+│                                     │   • RX/TX Gain, G/T, EIRP, Bandwidth  │
+│                                     │   • Transponder config                 │
+│                                     │                                        │
+│                                     │ Also handles delete with confirmation. │
+│                                     │                                        │
+│                                     │ Called by: Hub tab card buttons         │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   add_base_station_dialog(mw)          │
+│                                     │   edit_base_station(mw, index)         │
+│                                     │   delete_base_station(mw, index)       │
+│                                     │   add_satellite_dialog(mw)             │
+│                                     │   edit_satellite(mw, index)            │
+│                                     │   delete_satellite(mw, index)          │
+│                                     │   _create_bs_dialog(mw, bs=None)       │
+│                                     │   _create_sat_dialog(mw, sat=None)     │
+└─────────────────────────────────────┴────────────────────────────────────────┘
+
+
+
+================================================================================
+ 7. gui/dialogs/ — INFO, MATH & HISTORY DIALOGS
+================================================================================
+
+┌─────────────────────────────────────┬────────────────────────────────────────┐
+│ File                                │ Use                                    │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/dialogs/__init__.py             │ Package init. Re-exports all dialogs.  │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/dialogs/info_dialog.py          │ ABOUT / INFO DIALOG. Shows a styled    │
+│   (~55 lines)                       │ HTML dialog with:                      │
+│                                     │   • Feature summary                    │
+│                                     │   • Keyboard shortcuts list            │
+│                                     │   • ITU-R standards compliance info    │
+│                                     │   • Version and credits                │
+│                                     │                                        │
+│                                     │ Button: "ℹ Info" header button         │
+│                                     │                                        │
+│                                     │ Exports: show_info_dialog(mw)          │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/dialogs/math_details.py         │ MATHEMATICAL DETAILS DIALOG. Shows     │
+│   (~355 lines)                      │ step-by-step link budget calculations  │
+│                                     │ with equation formatting for every     │
+│                                     │ intermediate value:                    │
+│                                     │   • EIRP calculation                   │
+│                                     │   • Free Space Path Loss (FSPL)        │
+│                                     │   • Atmospheric attenuation            │
+│                                     │   • Rain attenuation (ITU-R P.618)     │
+│                                     │   • Cloud & scintillation losses       │
+│                                     │   • Antenna G/T                        │
+│                                     │   • C/N₀ and Eb/N₀                    │
+│                                     │   • Link margin                        │
+│                                     │   • Total link (uplink + downlink)     │
+│                                     │                                        │
+│                                     │ Button: "∑ Math" header button         │
+│                                     │                                        │
+│                                     │ Exports: show_math_details_dialog(mw)  │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/dialogs/history_dialog.py       │ CALCULATION HISTORY DIALOG. Tabular    │
+│   (~83 lines)                       │ display of all past link budget        │
+│                                     │ calculations with timestamps, key      │
+│                                     │ results, and CSV export button.        │
+│                                     │                                        │
+│                                     │ Button: "📋 History" header button     │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   show_history_dialog(mw)              │
+│                                     │   _export_history_csv(mw, parent)      │
+└─────────────────────────────────────┴────────────────────────────────────────┘
+
+
+
+================================================================================
+ 8. gui/utils/ — EXPORT, SAVE/LOAD, PRESETS
+================================================================================
+
+┌─────────────────────────────────────┬────────────────────────────────────────┐
+│ File                                │ Use                                    │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/utils/__init__.py               │ Package init. Re-exports utilities.    │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/utils/export.py                 │ REPORT EXPORT MODULE. Three export     │
+│   (~155 lines)                      │ functions:                             │
+│                                     │                                        │
+│                                     │  export_report(mw) — Generates a      │
+│                                     │    comprehensive .txt report with      │
+│                                     │    all uplink/downlink/total params,   │
+│                                     │    atmospheric conditions, margins.    │
+│                                     │                                        │
+│                                     │  export_csv(mw) — Exports key link    │
+│                                     │    budget results to a CSV file.       │
+│                                     │                                        │
+│                                     │  copy_results_to_clipboard(mw) —      │
+│                                     │    Copies formatted results text to    │
+│                                     │    the system clipboard.               │
+│                                     │                                        │
+│                                     │ Buttons: "Export Report", "Export CSV",│
+│                                     │          "Copy" in header toolbar      │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/utils/save_load.py              │ JSON SAVE/LOAD MODULE. Serializes and  │
+│   (~184 lines)                      │ deserializes the full application      │
+│                                     │ state to/from JSON files including:    │
+│                                     │   • All spin box / combo box values    │
+│                                     │   • Base station configurations        │
+│                                     │   • Satellite configurations           │
+│                                     │   • Selected items in Hub combos       │
+│                                     │   • Link mode, satellite type          │
+│                                     │                                        │
+│                                     │ Buttons: "💾 Save" / "📂 Load"        │
+│                                     │          in header toolbar             │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   save_parameters(mw)                  │
+│                                     │   load_parameters(mw)                  │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/utils/presets.py                │ SCENARIO PRESETS MODULE. Defines       │
+│   (~199 lines)                      │ ready-made satellite link scenarios    │
+│                                     │ and applies them to the UI:            │
+│                                     │                                        │
+│                                     │  Available presets:                    │
+│                                     │   • GEO DTH (Direct-to-Home TV)       │
+│                                     │   • GEO VSAT (Ku-band VSAT terminal)  │
+│                                     │   • Ka-band HTS (High Throughput)     │
+│                                     │   • LEO Broadband (Starlink-like)     │
+│                                     │   • MEO Broadband (O3b-like)          │
+│                                     │   • Military X-band                   │
+│                                     │   • Maritime VSAT                     │
+│                                     │   • Broadcast Uplink                  │
+│                                     │                                        │
+│                                     │ Each preset sets: frequency, power,   │
+│                                     │ antenna sizes, orbit params, modcod,  │
+│                                     │ and creates matching Hub entries.      │
+│                                     │                                        │
+│                                     │ Button: "⚡ Presets" dropdown in       │
+│                                     │         header toolbar                 │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   load_preset(mw, preset_name)         │
+│                                     │   PRESETS (dict)                       │
+│                                     │   PRESET_DISPLAY_NAMES (list)          │
+└─────────────────────────────────────┴────────────────────────────────────────┘
+
+
+
+================================================================================
+ 9. gui/advanced_analysis/ — IEEE-QUALITY ADVANCED ANALYSIS
+================================================================================
+
+┌─────────────────────────────────────┬────────────────────────────────────────┐
+│ File                                │ Use                                    │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/advanced_analysis/__init__.py   │ Package init. Re-exports the dialog.   │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/advanced_analysis/dialog.py     │ ADVANCED ANALYSIS DIALOG. Full-screen  │
+│   (~1858 lines)                     │ dialog with 11 professional analysis   │
+│                                     │ tabs producing IEEE publication-       │
+│                                     │ quality matplotlib plots:              │
+│                                     │                                        │
+│                                     │  Tab 1:  Link Budget Scenario          │
+│                                     │          Comparison (bar chart)        │
+│                                     │  Tab 2:  Elevation Angle Sweep         │
+│                                     │          (margin vs elevation)         │
+│                                     │  Tab 3:  Link Availability Analysis    │
+│                                     │          (% availability vs margin)    │
+│                                     │  Tab 4:  Frequency Band Comparison     │
+│                                     │          (L/S/C/X/Ku/Ka/Q/V-band)     │
+│                                     │  Tab 5:  Rain Attenuation Analysis     │
+│                                     │          (ITU-R P.618 rain zones)      │
+│                                     │  Tab 6:  Modulation Comparison         │
+│                                     │          (spectral eff. vs Eb/N₀)     │
+│                                     │  Tab 7:  Antenna Size Optimization     │
+│                                     │          (margin & cost vs diameter)   │
+│                                     │  Tab 8:  Interference Analysis         │
+│                                     │          (C/I vs angular separation)   │
+│                                     │  Tab 9:  Power Control Simulation      │
+│                                     │          (adaptive power vs fading)    │
+│                                     │  Tab 10: Monte Carlo Simulation        │
+│                                     │          (10k trials, PDF + CDF)       │
+│                                     │  Tab 11: Coverage Analysis             │
+│                                     │          (elevation contours on map)   │
+│                                     │                                        │
+│                                     │ Button: "🔬 Advanced" header button    │
+│                                     │                                        │
+│                                     │ Exports: AdvancedAnalysisDialog(QDlg)  │
+└─────────────────────────────────────┴────────────────────────────────────────┘
+
+
+
+================================================================================
+ 10. gui/ (ROOT) — 3D EARTH VISUALIZATION ENGINE
+================================================================================
+
+┌─────────────────────────────────────┬────────────────────────────────────────┐
+│ File                                │ Use                                    │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/__init__.py                     │ Package init. Re-exports               │
+│                                     │ Earth3DVisualization.                  │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ gui/earth_3d.py                     │ 3D EARTH RENDERING ENGINE. PyVista-    │
+│   (~673 lines)                      │ based renderer providing:              │
+│                                     │   • WGS-84 oblate spheroid Earth mesh  │
+│                                     │   • Blue Marble texture mapping        │
+│                                     │   • Atmospheric glow shell             │
+│                                     │   • Satellite meshes (colored by type) │
+│                                     │   • Orbit trail polylines (J2 + drag)  │
+│                                     │   • Coverage footprint cones           │
+│                                     │   • Ground station sphere markers      │
+│                                     │   • Uplink/downlink beam tube meshes   │
+│                                     │   • Geodetic ↔ Cartesian conversion   │
+│                                     │   • Dynamic camera control             │
+│                                     │                                        │
+│                                     │ Used by: gui/visualizations/view_3d.py │
+│                                     │                                        │
+│                                     │ Exports: Earth3DVisualization(QWidget) │
+└─────────────────────────────────────┴────────────────────────────────────────┘
+
+
+
+================================================================================
+ 11. pdfs/models/ — CORE COMPUTATION ENGINE
+================================================================================
+
+┌─────────────────────────────────────┬────────────────────────────────────────┐
+│ File                                │ Use                                    │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ pdfs/models/__init__.py             │ Package init. Re-exports all model     │
+│                                     │ classes for convenient importing.      │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ pdfs/models/constants.py            │ PHYSICAL & RF CONSTANTS. Central       │
+│   (~549 lines)                      │ repository for all constants:          │
+│                                     │   • Speed of light, Boltzmann const.  │
+│                                     │   • WGS-84 Earth ellipsoid params     │
+│                                     │   • Earth J2 oblateness coefficient   │
+│                                     │   • Atmospheric density model          │
+│                                     │   • Frequency band definitions         │
+│                                     │     (L, S, C, X, Ku, Ka, Q, V-band)  │
+│                                     │   • Satellite type definitions (GEO,  │
+│                                     │     LEO, MEO, HEO) with defaults      │
+│                                     │   • Modulation schemes with Eb/N₀     │
+│                                     │     thresholds and spectral eff.      │
+│                                     │   • Coding schemes (Turbo/LDPC rates) │
+│                                     │   • ITU-R rain zone coefficients      │
+│                                     │     (P.838-3, P.837)                  │
+│                                     │   • Rain rate data per climate zone   │
+│                                     │   • ITU PFD limits & EIRP masks       │
+│                                     │   • Satellite band allocations        │
+│                                     │                                        │
+│                                     │ Used by: Nearly every other module     │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ pdfs/models/link_budget.py          │ CORE LINK BUDGET CALCULATOR.           │
+│   (~2145 lines)                     │ ITU-R compliant 21-step uplink +       │
+│                                     │ downlink + total link analysis:        │
+│                                     │                                        │
+│                                     │  Uplink chain:                         │
+│                                     │   1.  GS EIRP (antenna gain + power)  │
+│                                     │   2.  FSPL (ITU-R P.525)              │
+│                                     │   3.  Atmospheric attenuation (P.676) │
+│                                     │   4.  Rain attenuation (P.618/P.838)  │
+│                                     │   5.  Cloud attenuation (P.840)       │
+│                                     │   6.  Scintillation loss (P.618)      │
+│                                     │   7.  Pointing & polarization loss    │
+│                                     │   8.  Satellite G/T                   │
+│                                     │   9.  C/N₀ uplink                     │
+│                                     │                                        │
+│                                     │  Downlink chain:                       │
+│                                     │   10. Satellite EIRP                   │
+│                                     │   11-17. (same loss categories)        │
+│                                     │   18. Ground station G/T              │
+│                                     │   19. C/N₀ downlink                   │
+│                                     │                                        │
+│                                     │  Total link:                           │
+│                                     │   20. Combined C/N₀ (1/total)        │
+│                                     │   21. Eb/N₀, BER, link margin        │
+│                                     │                                        │
+│                                     │  Also includes:                        │
+│                                     │   • MonteCarloSimulator (10k trials)  │
+│                                     │   • FadeDynamicsAnalyzer               │
+│                                     │   • RegulatoryComplianceChecker        │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   LinkBudget                           │
+│                                     │   MonteCarloSimulator                  │
+│                                     │   FadeDynamicsAnalyzer                 │
+│                                     │   RegulatoryComplianceChecker          │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ pdfs/models/orbit.py                │ ORBITAL MECHANICS ENGINE.              │
+│   (~630 lines)                      │ Keplerian orbit propagation with:      │
+│                                     │   • J2 secular perturbations (RAAN,   │
+│                                     │     argument of perigee precession)   │
+│                                     │   • Exponential atmospheric drag (LEO)│
+│                                     │   • Ground track computation           │
+│                                     │   • Elevation & azimuth angles         │
+│                                     │   • Slant range calculation            │
+│                                     │   • Sub-satellite point trace          │
+│                                     │   • Visibility window detection        │
+│                                     │   • Doppler shift estimation           │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   SatelliteOrbit                       │
+│                                     │   create_satellite_from_type(type)     │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ pdfs/models/modulation.py           │ MODULATION & CODING PERFORMANCE.       │
+│   (~290 lines)                      │ Theoretical BER curve computation      │
+│                                     │ for: BPSK, QPSK, 8PSK, 16QAM,        │
+│                                     │ 16APSK, 32APSK. Generates ideal and   │
+│                                     │ noisy constellation points. Computes   │
+│                                     │ EVM. Looks up coding gain for          │
+│                                     │ Turbo/LDPC at various code rates       │
+│                                     │ per DVB-S2 standard.                   │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   ModulationPerformance                │
+│                                     │   ChannelCoding                        │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ pdfs/models/satellite.py            │ SATELLITE CONFIGURATION MODEL.         │
+│   (~265 lines)                      │ Data class for satellite parameters    │
+│                                     │ including orbital position, antenna    │
+│                                     │ gains, transponder chain config,       │
+│                                     │ and coverage. Includes presets for:    │
+│                                     │   Hotbird 13E, Astra 19.2E,           │
+│                                     │   Intelsat 901, Eutelsat Ka-Sat,      │
+│                                     │   Starlink, O3b mPOWER, etc.          │
+│                                     │ Serializable to/from dict/JSON.        │
+│                                     │                                        │
+│                                     │ Exports: Satellite (class)             │
+│                                     │ Aliased as SatelliteConfig in app.     │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ pdfs/models/base_station.py         │ GROUND STATION CONFIGURATION MODEL.    │
+│   (~133 lines)                      │ Data class for base station params:    │
+│                                     │ location (lat/lon/alt), TX power,      │
+│                                     │ TX/RX antenna diameter & gain,         │
+│                                     │ LNA noise temp, feed/pointing losses.  │
+│                                     │ Includes presets for:                  │
+│                                     │   Athens, London, Singapore,           │
+│                                     │   New York, São Paulo, etc.           │
+│                                     │ Serializable to/from dict/JSON.        │
+│                                     │                                        │
+│                                     │ Exports: BaseStation (class)           │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ pdfs/models/transponder.py          │ SATELLITE TRANSPONDER "BLACK BOX".     │
+│   (~933 lines)                      │ Models the full RF signal chain:       │
+│                                     │   Rx Antenna → LNA → Mixer →          │
+│                                     │   IF Amplifier → HPA (TWTA/SSPA) →    │
+│                                     │   Tx Antenna                           │
+│                                     │                                        │
+│                                     │ Computes:                              │
+│                                     │   • Cascaded noise figure (Friis)      │
+│                                     │   • Total gain through chain           │
+│                                     │   • IBO / OBO (input/output backoff)   │
+│                                     │   • AM/PM conversion distortion        │
+│                                     │   • Transfer curves (linear + sat.)    │
+│                                     │   • 1dB compression point              │
+│                                     │                                        │
+│                                     │ Includes band-specific presets         │
+│                                     │ (C, Ku, Ka, X-band transponders).      │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   SatelliteTransponder                 │
+│                                     │   TransponderStage                     │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ pdfs/models/beam_pattern.py         │ ANTENNA BEAM PATTERN & COVERAGE.       │
+│   (~230 lines)                      │ Calculates EIRP contours, beam        │
+│                                     │ footprints, multi-beam coverage,       │
+│                                     │ edge-of-coverage gain rolloff per      │
+│                                     │ ITU-R S.465 and S.580 standards.       │
+│                                     │                                        │
+│                                     │ Exports: BeamPattern                   │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ pdfs/models/link_diagram.py         │ VISUALIZATION DRAWING FUNCTIONS.       │
+│   (~603 lines)                      │ Pure matplotlib drawing routines       │
+│                                     │ (no GUI coupling) for:                 │
+│                                     │   • Waterfall power-cascade diagrams   │
+│                                     │   • Textbook-style link diagrams       │
+│                                     │     (GS ↔ Satellite schematics)       │
+│                                     │   • Combined summary bar charts        │
+│                                     │                                        │
+│                                     │ Exports:                               │
+│                                     │   draw_waterfall_figure()              │
+│                                     │   draw_link_diagram()                  │
+│                                     │   draw_waterfall_detailed()            │
+│                                     │   draw_combined_summary()              │
+└─────────────────────────────────────┴────────────────────────────────────────┘
+
+
+
+================================================================================
+ 12. pdfs/ (ROOT) — LEGACY SCRIPTS & REFERENCE DOCS
+================================================================================
+
+┌─────────────────────────────────────┬────────────────────────────────────────┐
+│ File                                │ Use                                    │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ pdfs/advanced_analysis_             │ LEGACY STANDALONE advanced analysis.   │
+│   professional.py                   │ Older version of the analysis dialog.  │
+│   (~449 lines)                      │ Predecessor to gui/advanced_analysis/  │
+│                                     │ dialog.py. Kept for reference.         │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ pdfs/formula_analysis.py            │ PDF REPORT GENERATOR. Uses ReportLab   │
+│   (~583 lines)                      │ to create a comprehensive PDF          │
+│                                     │ documenting every formula used in the  │
+│                                     │ simulator with academic references.    │
+│                                     │ Outputs: All_Formulas_Analysis.pdf     │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ pdfs/3d_view_changes_.txt           │ CHANGE LOG for 3D view enhancements.   │
+│   (~275 lines)                      │ Documents WGS-84 oblate spheroid,      │
+│                                     │ J2 perturbations, atmospheric drag,    │
+│                                     │ and other improvements with full       │
+│                                     │ academic references.                   │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ pdfs/All_Formulas_Analysis_         │ Generated PDF report (binary).         │
+│   Report.pdf                        │                                        │
+├─────────────────────────────────────┼────────────────────────────────────────┤
+│ pdfs/downlink_simulator_            │ Generated PDF report (binary).         │
+│   report.pdf                        │                                        │
+└─────────────────────────────────────┴────────────────────────────────────────┘
+
+
+
+================================================================================
+ 13. ARCHITECTURE DIAGRAM
+================================================================================
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                      main_advanced.py                              │
+  │                  (Entry Point & Orchestrator)                       │
+  │                                                                     │
+  │  • __init__, apply_stylesheet, setup_ui, setup_shortcuts            │
+  │  • create_link_budget_panel (widget creation)                       │
+  │  • calculate_complete_link (core calculation)                       │
+  │  • Event handlers, animation, realtime updates                      │
+  └──────────┬──────────────────────┬──────────────────────┬────────────┘
+             │                      │                      │
+    ┌────────▼────────┐   ┌────────▼────────┐   ┌────────▼────────┐
+    │   gui/panels/   │   │gui/visualizations│   │    gui/hub/     │
+    │                 │   │                  │   │                 │
+    │ header.py       │   │ complete_link.py │   │ hub_tab.py      │
+    │ dashboard.py    │   │ waterfall.py     │   │ dialogs.py      │
+    └─────────────────┘   │ ber_curves.py    │   └────────┬────────┘
+                          │ constellation.py │            │
+    ┌─────────────────┐   │ ground_track.py  │   ┌────────▼────────┐
+    │  gui/dialogs/   │   │ link_diagram.py  │   │   gui/utils/    │
+    │                 │   │ transponder.py   │   │                 │
+    │ info_dialog.py  │   │ view_3d.py       │   │ export.py       │
+    │ math_details.py │   └────────┬─────────┘   │ save_load.py    │
+    │ history_dialog  │            │              │ presets.py      │
+    └─────────────────┘   ┌────────▼─────────┐   └─────────────────┘
+                          │  gui/earth_3d.py │
+    ┌─────────────────┐   │  (PyVista 3D)    │   ┌─────────────────┐
+    │   gui/core/     │   └──────────────────┘   │gui/advanced_    │
+    │                 │                          │  analysis/       │
+    │ mpl_canvas.py   │                          │                 │
+    │ splash_screen   │                          │ dialog.py       │
+    └─────────────────┘                          │ (11 analysis    │
+                                                 │  tabs)          │
+             ┌───────────────────────────────┐   └─────────────────┘
+             │        pdfs/models/           │
+             │    (Computation Engine)       │
+             │                               │
+             │  constants.py    orbit.py     │
+             │  link_budget.py  modulation.py│
+             │  satellite.py    transponder  │
+             │  base_station    beam_pattern │
+             │  link_diagram.py              │
+             └───────────────────────────────┘
+
+
+================================================================================
+ MODULE DELEGATION PATTERN
+================================================================================
+
+ All gui/ modules follow the same pattern:
+
+   • Each function takes `mw` (main window instance) as its first argument.
+   • main_advanced.py methods are thin wrappers:
+
+       def create_waterfall_tab(self):
+           return _mod_waterfall_tab(self)    # delegates to gui/visualizations/
+
+       def show_info_dialog(self):
+           _mod_info(self)                    # delegates to gui/dialogs/
+
+       def load_preset(self, name):
+           _mod_preset(self, name)            # delegates to gui/utils/
+
+   • Modules read/write attributes on `mw` (e.g., mw.waterfall_canvas,
+     mw.base_stations, mw.satellite_configs) for shared state.
+
+
+================================================================================
+ FILE COUNT SUMMARY
+================================================================================
+
+  Root-level scripts & docs ........  12 files
+  assets/ ..........................   5 files
+  gui/core/ ........................   3 files
+  gui/panels/ ......................   3 files
+  gui/visualizations/ ..............   9 files
+  gui/hub/ .........................   3 files
+  gui/dialogs/ .....................   4 files
+  gui/utils/ .......................   4 files
+  gui/advanced_analysis/ ...........   2 files
+  gui/ (root) ......................   2 files   (earth_3d.py + __init__)
+  pdfs/models/ .....................  10 files
+  pdfs/ (root) .....................   5 files
+  ─────────────────────────────────────────────
+  TOTAL ............................  62 files
+
+  Total Python source lines ........  ~12,000
+  main_advanced.py .................  ~3,100 lines  (was 8,360 before modularization)
+
+
+================================================================================
+                              END OF DOCUMENT
+================================================================================

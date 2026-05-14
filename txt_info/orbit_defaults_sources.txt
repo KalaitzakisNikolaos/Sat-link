@@ -1,0 +1,763 @@
+================================================================================
+  ORBIT-TYPE DEFAULT PARAMETERS — SOURCES AND JUSTIFICATION
+  for on_satellite_type_changed() in main_advanced.py
+================================================================================
+
+Document created: 2026
+Purpose: Verify and document all default parameter values used when switching
+         between GEO, LEO, MEO, and HEO orbit types in the satellite link
+         budget simulator.
+
+NOTE: Not all satellite link budget parameters originate from ITU-R
+Recommendations. ITU-R primarily governs frequency allocations and provides
+link-budget methodology. Specific satellite hardware parameters (TX power,
+antenna gain, noise figure) come from system-level specifications, FCC filings,
+GPS Interface Control Documents, and satellite communications textbooks.
+
+
+================================================================================
+  1.  GEO — GEOSTATIONARY EARTH ORBIT
+================================================================================
+
+Representative system: Fixed Satellite Service (FSS) — Ku-band
+(e.g., Astra, Hotbird, Intelsat, SES)
+
+Parameter                    Value        Source / Justification
+─────────────────────────────────────────────────────────────────────────────
+
+altitude_km                  35 786       Kepler's third law for geostationary
+                                          orbit.  Sidereal day period requires
+                                          a = 42 164 km (from Earth centre).
+                                          h = a − R_E = 42 164 − 6 378 = 35 786 km.
+                                          Ref: ITU-R S.1257-4, Annex 1
+                                               Vallado, "Fundamentals of
+                                               Astrodynamics", 4th Ed, Ch. 2
+
+sat_lat                      0.0°         Geostationary orbit is equatorial
+                                          by definition (inclination = 0°).
+                                          Ref: ITU-R Radio Regulations,
+                                               Article 1, Definition 1.189
+
+uplink_freq_ghz              14.0         Ku-band FSS uplink: 14.0 – 14.5 GHz
+                                          Ref: ITU-R Radio Regulations,
+                                               Article 5, Table of Frequency
+                                               Allocations (Region 1/2/3)
+                                               Footnotes 5.484A, 5.457A
+
+downlink_freq_ghz            12.0         Ku-band FSS downlink: 10.7 – 12.75 GHz
+                                          (BSS: 11.7 – 12.5 GHz in Regions 1,3)
+                                          Ref: ITU-R Radio Regulations,
+                                               Article 5, Table of Frequency
+                                               Allocations
+                                               ITU-R BO.1443-3 (BSS planning)
+
+bandwidth_mhz                36.0         Standard GEO transponder bandwidth.
+                                          Originally established by INTELSAT.
+                                          Now industry-standard for 36 MHz
+                                          and 72 MHz transponder channels.
+                                          Ref: ITU-R S.580-6, "Radiation
+                                               diagrams for use as design
+                                               objectives for antennas of
+                                               earth stations operating with
+                                               geostationary satellites"
+                                               Maral & Bousquet, "Satellite
+                                               Communications Systems", 6th Ed,
+                                               Ch. 5 (Transponder design)
+                                               ETSI EN 302 307-1 v1.4.1
+                                               (DVB-S2, uses 36 MHz reference)
+
+sat_rx_gain_dbi              30.0         Typical Ku-band GEO satellite
+                                          receive antenna gain for global beam.
+                                          At 14 GHz with ~1.2 m reflector:
+                                          G = η(πD/λ)² ≈ 0.55(π×1.2/0.021)²
+                                          ≈ 0.55 × 31 860 ≈ 17 523 ≈ 42.4 dBi
+                                          (spot beam). For global/regional
+                                          beam with shaped coverage: 28–32 dBi.
+                                          Ref: ITU-R S.1328-4, Table 1
+                                               (Example satellite parameters)
+                                               Maral & Bousquet, Ch. 4
+
+sat_nf_db                    2.0          Typical GEO satellite receiver
+                                          noise figure: 1.5 – 2.5 dB.
+                                          Ref: ITU-R S.1328-4
+                                               Maral & Bousquet, Ch. 4
+
+sat_tx_power_dbw             10.0         Transmit power per transponder.
+                                          TWTA saturated output: 100 – 200 W
+                                          (20 – 23 dBW) for modern GEO.
+                                          With multi-carrier backoff (IBO ≈
+                                          6 – 10 dB), effective per-carrier
+                                          power: 8 – 14 dBW.  10 dBW is a
+                                          reasonable single-carrier value.
+                                          Ref: Maral & Bousquet, Ch. 5
+                                               ITU-R S.1328-4
+
+sat_tx_gain_dbi              32.0         Ku-band transmit antenna gain for
+                                          regional beam (~1.5° beamwidth).
+                                          Ref: ITU-R S.1328-4, Table 1
+                                          Consistent with SATELLITE_TYPES
+                                          in constants.py
+
+gs_tx_power_dbw              10.0         Typical Ku-band VSAT earth station
+                                          transmit power: 1 – 20 W (0 – 13 dBW).
+                                          10 dBW (10 W) is standard.
+                                          Ref: ITU-R S.728-1, "Maximum
+                                               permissible levels of off-axis
+                                               EIRP density from VSATs"
+                                               ETSI EN 301 428 (VSAT standard)
+
+gs_tx_antenna_m              2.4          Standard VSAT antenna diameter.
+                                          Range: 1.2 m – 3.7 m for Ku-band.
+                                          2.4 m is the most common VSAT size.
+                                          Ref: Industry standard (e.g.,
+                                               Hughes HT2000, ViaSat SB2)
+
+gs_rx_antenna_m              1.2          DTH (Direct-to-Home) receive antenna.
+                                          Range: 0.45 m – 1.8 m.
+                                          1.2 m common in Europe for Ku-band.
+                                          Ref: ITU-R BO.1443-3
+                                               (BSS receiving systems)
+
+lna_temp_k                   50.0         Low Noise Block (LNB) noise
+                                          temperature for Ku-band: 40 – 75 K.
+                                          Ref: ITU-R S.1328-4
+                                               ETSI EN 303 372 (LNB standard)
+
+hpa_type                     TWTA         Travelling Wave Tube Amplifier is
+                                          standard for GEO FSS transponders.
+                                          Ref: Maral & Bousquet, Ch. 5
+                                               ITU-R S.1328-4
+
+ibo_db                       1.0          Input Back-Off: 0 – 6 dB typical.
+                                          1 dB is single-carrier near
+                                          saturation (FM/TV mode).
+                                          Ref: Maral & Bousquet, Ch. 5
+
+transponder_preset           Ku-band_std  Matches the Ku-band FSS allocation.
+                                          Ref: Internal application preset
+
+modulation                   QPSK         DVB-S2 standard modulation for
+                                          broadcast and broadband. QPSK is
+                                          the baseline modulation.
+                                          Ref: ETSI EN 302 307-1 v1.4.1
+                                               (DVB-S2 Standard), Table 8
+
+coding                       LDPC R=3/4   DVB-S2 uses LDPC+BCH coding.
+                                          R = 3/4 is a common operating point
+                                          balancing throughput and margin.
+                                          Ref: ETSI EN 302 307-1, Table 5a
+
+
+================================================================================
+  2.  LEO — LOW EARTH ORBIT
+================================================================================
+
+Representative system: LEO Broadband — Ku-band
+(e.g., Starlink, OneWeb, Amazon Kuiper)
+
+Parameter                    Value        Source / Justification
+─────────────────────────────────────────────────────────────────────────────
+
+altitude_km                  550          Starlink Shell 1 operational
+                                          altitude.
+                                          Ref: FCC Filing SAT-LOA-20161115-
+                                               00118 (SpaceX, Nov 2016)
+                                               FCC Filing SAT-MOD-20200417-
+                                               00037 (altitude modification)
+                                               ITU-R S.1503-3 (NGSO FSS
+                                               functional description)
+
+sat_lat                      0.0°         Instantaneous sub-satellite latitude
+                                          varies with inclination (53° for
+                                          Starlink Shell 1). 0° is a neutral
+                                          default (equator crossing).
+                                          Ref: FCC Filing SAT-LOA-20161115-
+                                               00118 (53° inclination)
+
+uplink_freq_ghz              14.0         Ku-band FSS uplink for NGSO:
+                                          14.0 – 14.5 GHz (same allocation
+                                          as GEO FSS, shared per RR Art. 22).
+                                          Ref: ITU-R Radio Regulations,
+                                               Article 5 & Article 22
+                                               FCC SAT-LOA-20161115-00118
+
+downlink_freq_ghz            12.0         Ku-band NGSO downlink:
+                                          10.7 – 12.7 GHz.
+                                          Ref: ITU-R Radio Regulations,
+                                               Article 5
+                                               FCC SAT-MOD-20200417-00037
+
+bandwidth_mhz                240.0        Wideband LEO broadband channel.
+                                          Starlink v2 mini uses W-band
+                                          (71–86 GHz) in addition to Ku/Ka.
+                                          240 MHz represents a single wideband
+                                          downlink channel for demonstration.
+                                          Ref: Derived from Starlink total
+                                               bandwidth specifications.
+                                               Approximate — actual Starlink
+                                               channelization is proprietary.
+
+sat_rx_gain_dbi              32.0         LEO phased array antenna gain.
+                                          Starlink phased array user-link
+                                          antenna: ~33 – 34 dBi peak.
+                                          32 dBi is conservative.
+                                          Ref: Wikipedia "Starlink" citing
+                                               FCC filings — user terminal
+                                               antenna gain ~33 dBi (Gen 1),
+                                               ~33–36 dBi (Gen 2/3).
+                                               Satellite-side phased array
+                                               is comparable.
+                                          Note: Generic LEO satellites may
+                                               have lower gain (25 dBi per
+                                               SATELLITE_TYPES in constants.py).
+                                               32 dBi is specific to broadband
+                                               LEO with phased arrays.
+
+sat_nf_db                    2.0          LEO satellite receiver noise figure.
+                                          Ref: Comparable to GEO specification.
+                                               Maral & Bousquet, Ch. 4
+
+sat_tx_power_dbw             5.0          LEO satellite transmit power per beam.
+                                          Starlink EIRP per beam: ~34 dBW
+                                          (FCC filing). With 32 dBi antenna:
+                                          P_tx = 34 − 32 = 2 dBW.
+                                          5 dBW is slightly conservative,
+                                          accounting for aggregate power
+                                          across multiple beams.
+                                          Ref: FCC SAT-LOA-20161115-00118
+                                               SpaceX EIRP filings
+                                          Consistent with SATELLITE_TYPES
+                                          LEO typical_tx_power_dbw = 5.0
+
+sat_tx_gain_dbi              32.0         Phased array beam-forming gain.
+                                          See sat_rx_gain_dbi above.
+                                          Ref: Same as satellite RX gain
+
+gs_tx_power_dbw              10.0         User terminal transmit power.
+                                          Starlink terminal: ~100 W total
+                                          power draw (including processing).
+                                          RF output: ~2 – 10 W.
+                                          10 dBW represents the RF power
+                                          at the antenna port.
+                                          Ref: FCC filing equipment
+                                               authorization data
+
+gs_tx_antenna_m              0.5          Starlink user terminal aperture.
+                                          Gen 1 "Dishy McFlatface": 23.2"
+                                          diameter ≈ 0.59 m.
+                                          Gen 3: 23.4" × 15.1" ≈ 0.5 m
+                                          equivalent aperture.
+                                          Ref: Wikipedia "Starlink" User
+                                               Terminals table
+                                               SpaceX product specifications
+
+gs_rx_antenna_m              0.5          Same terminal for TX and RX in
+                                          TDD/FDD phased array systems.
+                                          Ref: Same as gs_tx_antenna_m
+
+lna_temp_k                   75.0         Consumer-grade LNA noise temperature.
+                                          Higher than GEO/VSAT because of
+                                          compact integrated electronics.
+                                          Ref: Estimated from typical
+                                               consumer terminal specs.
+                                               Noise figure ≈ 1.0 dB →
+                                               T_LNA ≈ 75 K.
+
+hpa_type                     SSPA         Solid State Power Amplifier is
+                                          standard for LEO satellites (GaN
+                                          technology, lower mass/cost).
+                                          Ref: Maral & Bousquet, Ch. 5
+                                               Industry practice for NGSO
+
+ibo_db                       2.0          SSPA operates with lower backoff
+                                          than TWTA due to better linearity.
+                                          Ref: Maral & Bousquet, Ch. 5
+
+transponder_preset           Ku-band_std  Ku-band matches the frequency plan.
+                                          Ref: Internal application preset
+
+modulation                   8PSK         Higher-order modulation for LEO
+                                          broadband throughput. Starlink
+                                          uses up to 64-QAM (1024-QAM on
+                                          Gen 3 performance terminal), but
+                                          8PSK with LDPC is a reasonable
+                                          baseline for DVB-S2 wideband.
+                                          Ref: ETSI EN 302 307-1 (DVB-S2)
+
+coding                       LDPC R=3/4   See GEO coding entry.
+                                          Ref: ETSI EN 302 307-1
+
+
+================================================================================
+  3.  MEO — MEDIUM EARTH ORBIT
+================================================================================
+
+Representative system: Navigation Satellite (GPS-like)
+(e.g., GPS Block IIA/IIF, Galileo, GLONASS, BeiDou)
+
+NOTE: The parameters below model a navigation satellite system. MEO can also
+host communications satellites (e.g., O3b mPOWER at 8,062 km, Ka-band,
+EIRP ~52 dBW). The SATELLITE_TYPES dict in constants.py uses parameters
+more representative of a generic MEO (including comm satellites), hence
+some values differ from the GPS-specific defaults here.
+
+Parameter                    Value        Source / Justification
+─────────────────────────────────────────────────────────────────────────────
+
+altitude_km                  20 200       GPS semi-synchronous orbit altitude.
+                                          Semi-major axis a = 26 560 km,
+                                          h = a − R_E ≈ 20 200 km.
+                                          GPS Block IIF: ~20 460 km (Boeing).
+                                          Galileo: 23 222 km.
+                                          GLONASS: 19 100 km.
+                                          20 200 km typical for GPS.
+                                          Ref: IS-GPS-200 Rev. L (GPS
+                                               Interface Control Document),
+                                               published by GPS Directorate,
+                                               Table 20-IX
+                                               Boeing GPS Block IIF specs
+                                               (mass 1 633 kg, 12-year life)
+                                               ITU-R M.1787-3
+
+sat_lat                      0.0°         GPS inclination = 55°; sub-satellite
+                                          latitude varies from −55° to +55°.
+                                          0° is a neutral default.
+                                          Ref: IS-GPS-200, Section 3.3.1.1
+
+uplink_freq_ghz              1.6          GPS uplink commanding uses S-band
+                                          (TT&C at ~2.2 GHz), not L-band.
+                                          1.6 GHz represents the MSS uplink
+                                          allocation (1.610 – 1.6138 GHz)
+                                          used by some nav augmentation and
+                                          MSS systems (Inmarsat, Globalstar).
+                                          Ref: ITU-R Radio Regulations,
+                                               Article 5 (MSS L-band)
+                                          Note: This is an approximation.
+                                          For strict GPS modelling, the
+                                          uplink would be S-band.
+
+downlink_freq_ghz            1.575        GPS L1 carrier frequency:
+                                          1 575.42 MHz (exact).
+                                          Ref: IS-GPS-200 Rev. L, Section 3.3.1
+                                               "GPS signal structure"
+                                               Confirmed by: Wikipedia "GPS
+                                               signals" article citing
+                                               IS-GPS-200
+
+bandwidth_mhz                20.0         GPS L1 signal bandwidth:
+                                          C/A code: chip rate 1.023 Mcps →
+                                          main lobe BW ≈ 2.046 MHz.
+                                          P(Y) code: chip rate 10.23 Mcps →
+                                          main lobe BW ≈ 20.46 MHz.
+                                          The 20 MHz value captures the full
+                                          L1 composite signal bandwidth.
+                                          Ref: IS-GPS-200 Rev. L, Section 3.3.1
+                                               Table 3.3-1a
+
+sat_rx_gain_dbi              13.0         GPS L-band Earth-coverage antenna.
+                                          Helical array with shaped beam,
+                                          covering the visible Earth disk
+                                          from 20 200 km altitude (±13.9°
+                                          half-angle).
+                                          At L-band (λ = 0.19 m), a 0.4 m
+                                          diameter aperture gives:
+                                          G = η(πD/λ)² ≈ 0.55(π×0.4/0.19)²
+                                          ≈ 0.55 × 44 ≈ 24 ≈ 13.8 dBi.
+                                          Ref: GPS ICD (IS-GPS-200)
+                                               Kaplan & Hegarty,
+                                               "Understanding GPS/GNSS
+                                               Principles and Applications",
+                                               3rd Ed, Ch. 4
+
+sat_nf_db                    3.0          Navigation satellite receiver NF.
+                                          Slightly higher than comm sats
+                                          due to simpler front-end design.
+                                          Ref: Estimated; typical L-band
+                                               space receiver NF: 2–4 dB
+
+sat_tx_power_dbw             8.0          GPS satellite transmit power.
+                                          IS-GPS-200 specifies minimum
+                                          received C/A power of −158.5 dBW
+                                          (at Earth surface, 0 dBi antenna).
+                                          Working backward:
+                                            FSPL at L1 from 20 200 km
+                                            ≈ 182.5 dB (nadir)
+                                            Min EIRP (C/A) = −158.5 + 182.5
+                                            ≈ 24 dBW
+                                          With antenna gain 13 dBi:
+                                            P_tx ≈ 24 − 13 = 11 dBW
+                                          (This is for C/A code alone. Total
+                                          L1 power including P(Y) and M-code
+                                          can be 15−18 dBW.)
+                                          Value of 8 dBW used here for
+                                          consistency with SATELLITE_TYPES
+                                          typical_tx_power_dbw = 8.0.
+                                          GPS Block IIA had lower power
+                                          (~5−8 dBW for C/A signal only).
+                                          Ref: IS-GPS-200 Rev. L, Table 3.3-1a
+                                               SATELLITE_TYPES (constants.py)
+                                          Note: Actual GPS Block IIF total
+                                          L1 RF power is ~15−18 dBW. The
+                                          transponder chain model in the
+                                          application recalculates EIRP from
+                                          the loaded transponder preset.
+
+sat_tx_gain_dbi              13.0         Same antenna for TX and RX on GPS.
+                                          See sat_rx_gain_dbi.
+                                          Ref: IS-GPS-200, antenna patterns
+
+gs_tx_power_dbw              10.0         Ground command station TX power.
+                                          Ref: General purpose default
+
+gs_tx_antenna_m              1.0          L/S-band ground antenna.
+                                          GPS tracking stations use 10−12 m
+                                          antennas for TT&C, but user
+                                          receivers use small antennas.
+                                          1.0 m is a compromise for a
+                                          simulation ground terminal.
+                                          Ref: Approximate — no single
+                                          ITU-R source for this.
+
+gs_rx_antenna_m              0.3          GPS user receiver antenna.
+                                          Typical GPS patch antenna has
+                                          gain ≈ 3−5 dBi, corresponding
+                                          to an aperture diameter of ~0.2 m.
+                                          0.3 m represents a slightly larger
+                                          antenna (e.g., survey-grade CRPA).
+                                          Ref: Kaplan & Hegarty, Ch. 6
+
+lna_temp_k                   50.0         GPS receiver LNA temperature.
+                                          Modern GNSS receivers: NF ≈ 0.7 dB
+                                          → T ≈ 50 K.
+                                          Ref: Kaplan & Hegarty, Ch. 6
+
+hpa_type                     SSPA         LEO/MEO satellites use SSPA
+                                          (solid-state, GaAs/GaN).
+                                          Ref: Maral & Bousquet, Ch. 5
+
+ibo_db                       2.0          SSPA typical IBO.
+                                          Ref: Maral & Bousquet, Ch. 5
+
+transponder_preset           C-band_std   Closest available preset to L-band.
+                                          (No L-band preset exists in the
+                                          application.)
+                                          This is a KNOWN LIMITATION:
+                                          The C-band preset uses 6/4 GHz,
+                                          not 1.6/1.575 GHz. The spinner
+                                          frequencies override the preset
+                                          frequencies for the link budget
+                                          calculation.
+                                          Ref: Internal application design
+
+modulation                   BPSK         GPS C/A code uses BPSK modulation
+                                          on L1 carrier.
+                                          Ref: IS-GPS-200 Rev. L, Section 3.3.1
+                                               Confirmed by Wikipedia "GPS
+                                               signals" article
+
+coding                       Turbo R=1/2  GPS uses convolutional coding
+                                          (not turbo codes). However, the
+                                          application does not have a
+                                          "Convolutional (R=1/2)" with the
+                                          exact GPS code rate. Turbo R=1/2
+                                          is the nearest equivalent in terms
+                                          of rate and coding gain.
+                                          Galileo E1 uses convolutional
+                                          coding (R=1/2, k=7).
+                                          Ref: IS-GPS-200 (convolutional)
+                                               Galileo OS SIS ICD
+                                          Note: "Convolutional (R=1/2)" is
+                                          available in CODING_SCHEMES and
+                                          would be more accurate for GPS.
+
+
+================================================================================
+  4.  HEO — HIGHLY ELLIPTICAL ORBIT
+================================================================================
+
+Representative system: Molniya-type broadcast/communications
+(e.g., Molniya, Meridian, Sirius XM, Tundra)
+
+Parameter                    Value        Source / Justification
+─────────────────────────────────────────────────────────────────────────────
+
+altitude_km                  20 000       Average altitude of Molniya orbit.
+                                          Perigee ≈ 600 km, Apogee ≈ 39 700 km.
+                                          Semi-major axis ≈ 26 600 km.
+                                          Average altitude ≈ (600+39700)/2
+                                          ≈ 20 150 km.
+                                          Ref: Kidder & Vonder Haar (1990),
+                                               "On the Use of Satellites in
+                                               Molniya Orbits", J. Atmos.
+                                               Oceanic Technol., 7, 517–522
+                                               Wikipedia "Molniya orbit"
+                                               citing multiple sources
+
+sat_lat                      63.4°        Critical inclination for frozen
+                                          orbit. At this inclination, the
+                                          rate of apsidal rotation (dω/dt)
+                                          is zero, so the argument of perigee
+                                          remains fixed without station-
+                                          keeping manoeuvres.
+                                          Derivation: dω/dt ∝ (4 − 5sin²i)
+                                          Setting 4 − 5sin²i = 0:
+                                          sin²i = 4/5, i = 63.435°
+                                          Ref: Vallado, "Fundamentals of
+                                               Astrodynamics and
+                                               Applications", 4th Ed, Ch. 9
+                                               (J₂ perturbation theory)
+                                               ITU-R S.1257-4
+                                               Wikipedia "Molniya orbit"
+                                               (confirmed frozen orbit at
+                                               63.4°, eccentricity 0.74,
+                                               period 718 min)
+
+uplink_freq_ghz              14.0         Ku-band for modern HEO comms.
+                                          Original Molniya used VHF/UHF.
+                                          Sirius XM uses S-band (2.32 GHz).
+                                          For a generic modern HEO
+                                          communications satellite, Ku-band
+                                          FSS allocation applies.
+                                          Ref: ITU-R Radio Regulations,
+                                               Article 5 (Ku-band FSS)
+
+downlink_freq_ghz            12.0         Ku-band FSS downlink.
+                                          Ref: Same as GEO allocation
+
+bandwidth_mhz                36.0         Standard transponder bandwidth.
+                                          Ref: Same as GEO bandwidth
+
+sat_rx_gain_dbi              30.0         Steerable antenna (mechanically or
+                                          electronically pointed) from HEO.
+                                          At apogee (~39 700 km), similar
+                                          coverage geometry to GEO.
+                                          Ref: Maral & Bousquet, Ch. 4
+                                          Consistent with SATELLITE_TYPES
+                                          HEO typical_antenna_gain_dbi = 30.0
+
+sat_nf_db                    2.5          Slightly higher than GEO due to
+                                          radiation environment (Van Allen
+                                          belt passages 4 times/day).
+                                          Ref: Estimated; based on degradation
+                                               considerations
+
+sat_tx_power_dbw             10.0         Ku-band TWTA output per transponder.
+                                          Ref: Same rationale as GEO.
+                                          Consistent with SATELLITE_TYPES
+                                          HEO typical_tx_power_dbw = 10.0
+
+sat_tx_gain_dbi              30.0         Steerable/shaped antenna gain.
+                                          Ref: SATELLITE_TYPES
+                                          HEO typical_antenna_gain_dbi = 30.0
+
+gs_tx_power_dbw              10.0         Same as GEO VSAT.
+                                          Ref: ITU-R S.728-1
+
+gs_tx_antenna_m              2.4          Same as GEO VSAT antenna.
+                                          Steerable to track HEO satellite.
+                                          Ref: Industry standard
+
+gs_rx_antenna_m              1.2          Same as GEO DTH/VSAT receive.
+                                          Ref: ITU-R BO.1443-3
+
+lna_temp_k                   55.0         Slightly higher than GEO (55 K vs
+                                          50 K) to account for variable
+                                          elevation angles requiring
+                                          wider-beam ground antenna.
+                                          Ref: Estimated; Maral & Bousquet
+
+hpa_type                     TWTA         TWTA for higher power efficiency
+                                          in HEO (long distance at apogee).
+                                          Ref: Maral & Bousquet, Ch. 5
+
+ibo_db                       1.0          Same as GEO single-carrier.
+                                          Ref: Maral & Bousquet, Ch. 5
+
+transponder_preset           Ku-band_std  Ku-band matches the frequency plan.
+                                          Ref: Internal application preset
+
+modulation                   QPSK         Robust modulation for variable
+                                          link geometry.
+                                          Ref: ETSI EN 302 307-1 (DVB-S2)
+
+coding                       LDPC R=3/4   Same as GEO.
+                                          Ref: ETSI EN 302 307-1
+
+
+================================================================================
+  5.  KNOWN LIMITATIONS AND APPROXIMATIONS
+================================================================================
+
+1. MEO TRANSPONDER PRESET: The C-band_standard preset (6/4 GHz) is used for MEO
+   because no L-band (1.6/1.575 GHz) preset exists in the application.  The
+   spinner-set frequencies override the preset frequencies in the link budget
+   calculation, so the final results use L-band propagation correctly.
+
+2. MEO TX POWER: The value of 8 dBW is a compromise.  GPS Block IIF total L1
+   power is approximately 15–18 dBW, but the C/A code signal alone is lower
+   (~5–8 dBW for earlier blocks).  The transponder chain model recalculates
+   the actual EIRP independently, so the displayed spinner value is overridden.
+
+3. LEO ANTENNA GAIN: The 32 dBi value is specific to Starlink-class broadband
+   LEO with phased arrays.  Other LEO systems (IoT, MSS) may have antenna
+   gains as low as 6–25 dBi depending on frequency band and mission.
+
+4. HEO FREQUENCY: Original Molniya satellites (1965–2000s) used VHF/UHF.
+   Sirius XM uses S-band (2.32 GHz).  The Ku-band defaults represent a
+   modern HEO communications system, not a specific historical system.
+
+5. BANDWIDTH VALUES: The 240 MHz LEO bandwidth is representative of wideband
+   broadband LEO, not a specific Starlink channel bandwidth (which is
+   proprietary and uses dynamic spectrum allocation across Ku/Ka/W bands).
+
+6. ALL ORBIT TYPES: The free-space path loss, atmospheric attenuation, and
+   rain fade are computed dynamically by the link budget model using ITU-R
+   P.618 and ITU-R P.676 propagation models.  They are NOT hardcoded in the
+   orbit defaults.
+
+
+================================================================================
+  6.  BIBLIOGRAPHY
+================================================================================
+
+ITU-R Recommendations (International Telecommunication Union):
+──────────────────────────────────────────────────────────────
+
+[1]  ITU-R Radio Regulations, Edition of 2020
+     Article 5 — Frequency Allocations
+     Article 22 — Sharing with NGSO FSS systems
+     Article 1 — Terms and Definitions (§1.189: geostationary satellite)
+
+[2]  ITU-R S.1328-4 (07/2024)
+     "Satellite system characteristics to be considered in frequency sharing
+     analyses within the fixed-satellite service"
+     (Methodology and example satellite parameters)
+
+[3]  ITU-R S.1257-4 (02/2012)
+     "Analytical method to calculate visibility statistics for non-
+     geostationary satellite orbit systems"
+
+[4]  ITU-R S.1503-3 (01/2018)
+     "Functional description to be used in developing software tools for
+     determining conformity of non-geostationary-satellite orbit fixed-
+     satellite service systems"
+
+[5]  ITU-R S.580-6 (10/2004)
+     "Radiation diagrams for use as design objectives for antennas of
+     earth stations operating with geostationary satellites"
+
+[6]  ITU-R S.728-1 (10/1995)
+     "Maximum permissible levels of off-axis e.i.r.p. density from
+     very small aperture terminals (VSATs)"
+
+[7]  ITU-R BO.1443-3 (06/2011)
+     "Reference BSS receiving system parameters for use in frequency
+     sharing analyses with the BSS in the frequency band 11.7–12.75 GHz
+     in Regions 1 and 3"
+
+[8]  ITU-R P.618-14 (12/2023)
+     "Propagation data and prediction methods required for the design of
+     Earth-space telecommunication systems"
+
+[9]  ITU-R P.676-13 (09/2022)
+     "Attenuation by atmospheric gases and related effects"
+
+[10] ITU-R M.1787-3 (09/2022)
+     "Description of systems and networks in the radionavigation-satellite
+     service (space-to-Earth and space-to-space) and technical
+     characteristics of transmitting space stations operating in the
+     bands 1 164–1 215 MHz, 1 215–1 300 MHz and 1 559–1 610 MHz"
+
+
+GPS Interface Control Documents:
+────────────────────────────────
+
+[11] IS-GPS-200 Revision L (May 2020)
+     "NAVSTAR GPS Space Segment/Navigation User Segment Interfaces"
+     GPS Directorate, U.S. Space Force
+     (Signal specifications: L1 = 1575.42 MHz, C/A code 1.023 Mcps,
+     BPSK modulation, minimum received power −158.5 dBW)
+
+
+DVB-S2 Standard:
+────────────────
+
+[12] ETSI EN 302 307-1 v1.4.1 (2014-11)
+     "Digital Video Broadcasting (DVB); Second generation framing structure,
+     channel coding and modulation systems for Broadcasting, Interactive
+     Services, News Gathering and other broadband satellite applications;
+     Part 1: DVB-S2"
+     (Modulation: QPSK, 8PSK, 16/32APSK; Coding: LDPC+BCH)
+
+
+FCC Filings (SpaceX / Starlink):
+────────────────────────────────
+
+[13] FCC Filing SAT-LOA-20161115-00118
+     Space Exploration Holdings, LLC — Application for NGSO FSS
+     (Original Starlink constellation application: Ku-/Ka-band,
+     4,425 satellites)
+
+[14] FCC Filing SAT-MOD-20200417-00037
+     Space Exploration Holdings, LLC — Modification of NGSO license
+     (Altitude reduction to 540–570 km, updated orbital shells)
+     Ku-band: 10.7–12.7 GHz DL, 14.0–14.5 GHz UL
+     Ka-band: 17.8–20.2 GHz DL, 27.5–30.0 GHz UL
+     Grant date: 2021-04-27
+
+
+Textbooks:
+──────────
+
+[15] Maral, G. & Bousquet, M.
+     "Satellite Communications Systems: Systems, Techniques and
+     Technology", 6th Edition, Wiley, 2020
+     (Chapters 4–5: Satellite transponder design, TWTA/SSPA, antenna
+     gain, noise figure, link budget methodology)
+
+[16] Vallado, D.A.
+     "Fundamentals of Astrodynamics and Applications", 4th Edition,
+     Microcosm Press, 2013
+     (Chapter 2: Two-body orbital mechanics, geostationary altitude;
+     Chapter 9: J₂ perturbations, critical inclination 63.4°)
+
+[17] Kaplan, E.D. & Hegarty, C.J.
+     "Understanding GPS/GNSS: Principles and Applications", 3rd Edition,
+     Artech House, 2017
+     (Chapter 4: GPS satellite antenna patterns, L-band gain;
+     Chapter 6: Receiver front-end noise characteristics)
+
+[18] Wertz, J.R. & Larson, W.J.
+     "Space Mission Analysis and Design" (SMAD), 3rd Edition,
+     Microcosm Press, 1999
+     (Orbit selection, link budget sizing, mission-level parameters)
+
+
+Other Sources:
+──────────────
+
+[19] Wikipedia contributors, "GPS signals", Wikipedia,
+     https://en.wikipedia.org/wiki/GPS_signals
+     (L1 = 1575.42 MHz, L2 = 1227.60 MHz, BPSK modulation,
+     code structures — citing IS-GPS-200)
+
+[20] Wikipedia contributors, "Starlink", Wikipedia,
+     https://en.wikipedia.org/wiki/Starlink
+     (User terminal specs: antenna gain ~33 dBi Gen 1, up to 36 dBi
+     Gen 3; Ku-/Ka-band phased arrays; 550 km altitude — citing FCC
+     filings and SpaceX data)
+
+[21] Wikipedia contributors, "Molniya orbit", Wikipedia,
+     https://en.wikipedia.org/wiki/Molniya_orbit
+     (Inclination 63.4°, eccentricity 0.74, period 718 min, perigee 600 km,
+     apogee 39 700 km — citing Kidder & Vonder Haar 1990 and others)
+
+[22] Wikipedia contributors, "GPS Block IIF", Wikipedia,
+     https://en.wikipedia.org/wiki/GPS_Block_IIF
+     (Mass 1 633 kg, semi-synchronous MEO ~20 460 km, 12-year life,
+     Boeing manufacturer — citing ULA and Air Force press releases)
+
+
+================================================================================
+  END OF DOCUMENT
+================================================================================

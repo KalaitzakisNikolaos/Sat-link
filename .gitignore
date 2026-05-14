@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# Build and packaging outputs
+build/
+dist/
+release/
+.build-cache/
+*.spec
+*.exe
+*.msi
+*.zip
+
+# Local/user state
+user_presets.json
+*.tmp
+*.bak
+
+# LaTeX generated files
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+
+# Generated analysis artifacts
+roc_figure.*
+final_page*.png
+tester.py
+
+# Local manuscript/administrative duplicates not needed in the public repo
+CopyrightReceipt.pdf
+paper_MDPI.pdf
+Satlink_IEEE.pdf
+
+# OS/editor metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/

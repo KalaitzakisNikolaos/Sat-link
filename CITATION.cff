@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If Sat-Link supports your teaching, research, or conference work, please cite the project."
+title: "Sat-Link: An Open-Source Simulator for ITU-R-Compliant Satellite Link-Budget Analysis"
+type: software
+authors:
+  - name: "Sat-Link Team"
+year: 2026
+license: MIT
+repository-code: "https://github.com/KalaitzakisNikolaos/Sat-link"
+abstract: "Sat-Link is an open-source desktop simulator for ITU-R-aligned satellite link-budget analysis, transponder modeling, orbit visualization, and early-stage satellite communication trade studies."
+keywords:
+  - satellite communications
+  - link budget
+  - ITU-R
+  - PyQt5
+  - transponder
+  - propagation modeling

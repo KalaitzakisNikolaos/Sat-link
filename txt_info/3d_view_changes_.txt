@@ -1,0 +1,366 @@
+================================================================================
+   3D VISUALIZATION & ORBITAL MECHANICS — CHANGES AND REFERENCES
+   Date: February 9, 2026
+================================================================================
+
+Files Modified:
+  - models/constants.py
+  - models/orbit.py
+  - gui/earth_3d.py
+
+
+================================================================================
+ CHANGE 1: WGS-84 OBLATE SPHEROID EARTH (was: perfect sphere)
+================================================================================
+
+File: gui/earth_3d.py — create_earth(), _create_oblate_spheroid()
+File: models/constants.py — new constants added
+
+WHAT CHANGED:
+  Earth is now rendered as a WGS-84 oblate spheroid instead of a perfect
+  sphere. The equatorial radius (6378.137 km) is used for the mesh, and
+  the Z-axis is scaled by the ratio b/a (polar/equatorial = 0.99665) to 
+  reproduce the real flattening of f = 1/298.257223563.
+
+  New constants added:
+    EARTH_SEMI_MAJOR = 6378.137 km
+    EARTH_SEMI_MINOR = 6356.752314245 km
+    EARTH_FLATTENING = 1/298.257223563
+    EARTH_ECCENTRICITY_SQ (derived)
+
+REFERENCES:
+  [1] NIMA TR8350.2, 3rd Edition (January 2000)
+      "Department of Defense World Geodetic System 1984 — Its Definition
+       and Relationships with Local Geodetic Systems"
+      National Imagery and Mapping Agency
+      Table 3.1: WGS 84 Defining Parameters
+      https://earth-info.nga.mil/php/download.php?file=coord-wgs84
+
+  [2] Vallado, D. A. (2013)
+      "Fundamentals of Astrodynamics and Applications", 4th Edition
+      Microcosm Press / Springer, Section 3.1
+      ISBN: 978-1881883180
+
+
+================================================================================
+ CHANGE 2: ATMOSPHERIC LIMB GLOW (new feature)
+================================================================================
+
+File: gui/earth_3d.py — create_earth() (new atmosphere sphere)
+
+WHAT CHANGED:
+  A semi-transparent blue sphere (~1.5% larger than Earth's equatorial radius,
+  representing ~96 km altitude) is rendered around the Earth to simulate the
+  atmospheric scattering glow visible from space. This is a simplified
+  single-layer approximation of atmospheric Rayleigh scattering.
+
+REFERENCES:
+  [1] Nishita, T., Sirai, T., Tadamura, K., Nakamae, E. (1993)
+      "Display of the Earth Taking into Account Atmospheric Scattering"
+      SIGGRAPH '93 Proceedings, pp. 175-182
+      ACM Digital Library: https://doi.org/10.1145/166117.166140
+
+  [2] Real atmosphere extends to ~100 km (Kármán line).
+      International Astronautical Federation definition.
+
+
+================================================================================
+ CHANGE 3: WGS-84 CONSISTENT GROUND STATION POSITIONING (was: spherical model)
+================================================================================
+
+File: gui/earth_3d.py — add_ground_station(), add_link_line(),
+                         _geodetic_to_cartesian_wgs84()
+
+WHAT CHANGED:
+  Ground station positions are now computed using the WGS-84 ellipsoid
+  (same formula as orbit.py's _geodetic_to_ecef), replacing the previous
+  spherical approximation: r * cos(lat) * cos(lon), etc.
+
+  The cone direction for ground station markers now uses the ellipsoidal
+  surface normal (n = [x/a², y/a², z/b²] normalized) instead of the
+  position vector, which is only correct for a sphere.
+
+REFERENCES:
+  [1] NIMA TR8350.2, 3rd Edition, Section 4.4
+      Geodetic-to-ECEF coordinate conversion formulas
+
+  [2] Vallado, D. A. (2013), Eq. 3-7
+      "Fundamentals of Astrodynamics and Applications"
+
+
+================================================================================
+ CHANGE 4: PROPER GEODESIC COVERAGE FOOTPRINT (was: flat-plane approximation)
+================================================================================
+
+File: gui/earth_3d.py — add_coverage_circle()
+
+WHAT CHANGED:
+  The satellite coverage footprint is now a proper geodesic circle on the
+  Earth's surface, computed using:
+  
+  1. Earth central angle formula:
+     ψ = arccos(RE/(RE+h) · cos(El_min)) - El_min
+     This gives the angular radius of the coverage area as seen from
+     Earth's center.
+  
+  2. Rodrigues' rotation formula to generate circle points on the sphere:
+     v_rot = v·cos(θ) + (k×v)·sin(θ) + k·(k·v)·(1-cos(θ))
+     Points are first tilted away from the subsatellite point by ψ,
+     then rotated 360° around the subsatellite axis.
+
+  Previously, the code created a planar circle with an arbitrary 0.1 scaling
+  factor that did not correspond to any physical quantity.
+
+REFERENCES:
+  [1] Roddy, D. (2006)
+      "Satellite Communications", 4th Edition
+      McGraw-Hill, Section 3.2: Coverage Area
+      Eq. 3.2: Central angle geometry
+      ISBN: 978-0071462983
+
+  [2] Rodrigues, O. (1840)
+      "Des lois géométriques qui régissent les déplacements d'un système
+       solide dans l'espace"
+      Journal de Mathématiques Pures et Appliquées, 5, pp. 380–440
+
+  [3] Wertz, J. R. (2011)
+      "Space Mission Engineering: The New SMAD"
+      Microcosm Press, Section 5.3: Earth Coverage
+      ISBN: 978-1881883159
+
+
+================================================================================
+ CHANGE 5: ECI-TO-ECEF ROTATION IN LOOK ANGLES (was: frame mixing bug)
+================================================================================
+
+File: models/orbit.py — calculate_look_angles(), new _eci_to_ecef() method,
+                        calculate_ground_track() refactored
+
+WHAT CHANGED:
+  Previously, the satellite position was computed in ECI (Earth-Centered
+  Inertial) coordinates but the ground station was in ECEF (Earth-Centered
+  Earth-Fixed). These two frames diverge over time due to Earth's rotation,
+  so subtracting them directly gave incorrect range vectors (and thus
+  wrong azimuth/elevation) for any t ≠ 0.
+
+  Fix: A new static method _eci_to_ecef() applies the rotation matrix Rz(θ_GMST)
+  to convert the satellite ECI position to ECEF before computing the range
+  vector. This uses:
+    θ_GMST = ω_E · t  (simplified for short arcs from epoch)
+    where ω_E = 7.2921159×10⁻⁵ rad/s
+
+  The ground track computation was also refactored to use this same
+  _eci_to_ecef() method for consistency (previously it applied the rotation
+  inline with slightly different logic).
+
+REFERENCES:
+  [1] Vallado, D. A. (2013), Eq. 3-82
+      "Fundamentals of Astrodynamics and Applications"
+      IAU-76/FK5 GMST approximation
+
+  [2] Vallado (2013), Algorithm 28 — RAZEL (Range, Azimuth, Elevation)
+      Section 4.4.2 — Topocentric SEZ frame
+
+  [3] IERS Conventions 2010 (IERS Technical Note No. 36)
+      Chapter 5: Transformation between the ITRS and GCRS
+      https://www.iers.org/IERS/EN/Publications/TechnicalNotes/tn36.html
+
+
+================================================================================
+ CHANGE 6: J2 OBLATENESS PERTURBATION (new feature)
+================================================================================
+
+File: models/orbit.py — _compute_j2_rates(), get_satellite_position_eci()
+
+WHAT CHANGED:
+  The orbit propagator now includes secular (long-term average) perturbations
+  due to Earth's J2 zonal harmonic (oblateness). Three orbital elements are
+  affected:
+
+  1. RAAN regression:
+     Ω̇ = -1.5 · n · J2 · (RE/p)² · cos(i)
+     For LEO at 53°: ~-5°/day; for GEO at 0°: ~-4.9°/century
+
+  2. Apsidal rotation (argument of perigee precession):
+     ω̇ = 1.5 · n · J2 · (RE/p)² · (2 - 2.5·sin²(i))
+     At critical inclination i=63.4° (Molniya): ω̇ = 0 (frozen perigee)
+
+  3. Mean motion correction:
+     Corrects the mean anomaly rate for J2's effect on orbital energy
+
+  The new constant EARTH_J2 = 1.08263×10⁻³ was added to constants.py.
+
+REFERENCES:
+  [1] Vallado, D. A. (2013), Eq. 9-41 through 9-43
+      "Fundamentals of Astrodynamics and Applications"
+      Chapter 9: General Perturbation Techniques
+
+  [2] Montenbruck, O. and Gill, E. (2000)
+      "Satellite Orbits: Models, Methods, and Applications"
+      Springer, Section 3.4: Earth Oblateness (J2)
+      Eq. 3.30–3.32
+      ISBN: 978-3540672807
+
+  [3] EGM-96 / WGS-84 gravity model
+      J2 value from Lemoine, F. G., et al. (1998)
+      "The Development of the Joint NASA GSFC and NIMA Geopotential Model
+       EGM96", NASA/TP-1998-206861
+
+
+================================================================================
+ CHANGE 7: ATMOSPHERIC DRAG MODEL FOR LEO (new feature)
+================================================================================
+
+File: models/orbit.py — _get_atmospheric_density(), _compute_drag_perturbation()
+File: models/constants.py — ATMOSPHERIC_DENSITY_MODEL dict
+
+WHAT CHANGED:
+  An exponential atmospheric density model is now available for computing
+  drag effects on LEO satellites. The model uses altitude-dependent
+  reference density (ρ₀), reference height (h₀), and scale height (H):
+    ρ(h) = ρ₀ · exp(-(h - h₀) / H)
+
+  Drag parameters can be specified per satellite:
+    - drag_area_m2: cross-sectional area (default 1.0 m²)
+    - drag_coeff: aerodynamic drag coefficient (default 2.2)
+    - mass_kg: satellite mass (default 100 kg)
+
+  The LEO preset now includes Starlink-representative drag parameters:
+    A = 10 m², Cd = 2.2, m = 260 kg
+
+  Note: The drag perturbation is computed but the semi-major axis is NOT
+  decremented during propagation (would require numerical integration).
+  The infrastructure is in place for future enhancement.
+
+REFERENCES:
+  [1] US Standard Atmosphere 1976
+      NOAA/NASA/USAF, NOAA-S/T 76-1562
+      https://ntrs.nasa.gov/citations/19770009539
+
+  [2] CIRA-72 (COSPAR International Reference Atmosphere 1972)
+      Used for scale height values at different altitudes
+
+  [3] Vallado, D. A. (2013), Table 8-4
+      Exponential atmosphere density model
+
+  [4] Wertz, J. R. (2011)
+      "Space Mission Engineering: The New SMAD"
+      Table 8-4: Typical spacecraft drag parameters
+
+  [5] SpaceX FCC Filing (2019)
+      Starlink satellite mass ~260 kg, flat-panel ~10 m² cross-section
+
+
+================================================================================
+ CHANGE 8: CORRECTED MOLNIYA (HEO) SEMI-MAJOR AXIS
+================================================================================
+
+File: models/orbit.py — create_satellite_from_type() HEO case
+
+WHAT CHANGED:
+  Previously: semi_major_axis = EARTH_RADIUS + 26550 = 32921 km
+  This was incorrect — it treated 26550 km as an "altitude" but Molniya's
+  average altitude is much lower than 26550 km.
+
+  Corrected using orbital mechanics:
+    Perigee altitude ≈ 500 km  → r_p = 6871 km
+    Apogee altitude ≈ 39873 km → r_a = 46244 km
+    Semi-major axis a = (r_p + r_a) / 2 = 26557.5 km
+    Eccentricity e = (r_a - r_p) / (r_a + r_p) ≈ 0.74
+
+  The semi-major axis is measured from Earth's center, not from the surface.
+
+REFERENCES:
+  [1] Sidi, M. J. (1997)
+      "Spacecraft Dynamics and Control"
+      Cambridge University Press, Chapter 4: Orbital Mechanics
+      ISBN: 978-0521550727
+
+  [2] Kidder, S. Q. and Vonder Haar, T. H. (1990)
+      "On the Use of Satellites in Molniya Orbits for Meteorological
+       Observation of Middle and High Latitudes"
+      Journal of Atmospheric and Oceanic Technology, 7(3), pp. 517-522
+
+  [3] Critical inclination i = 63.4° — at this inclination, J2 perturbation
+      causes zero apsidal rotation (ω̇ = 0), keeping the apogee fixed over
+      the northern hemisphere.
+      Source: Vallado (2013) Eq. 9-42, setting ω̇ = 0:
+        2 - 2.5·sin²(i) = 0  →  sin²(i) = 0.8  →  i = 63.435°
+
+
+================================================================================
+ CHANGE 9: SATELLITE VELOCITY COMPUTATION (new method)
+================================================================================
+
+File: models/orbit.py — get_satellite_velocity_eci()
+
+WHAT CHANGED:
+  New method to compute satellite velocity in ECI coordinates for any time,
+  using the specific angular momentum h = √(μ·p) and perifocal velocity
+  components:
+    ẋ_PQW = -(μ/h)·sin(ν)
+    ẏ_PQW = (μ/h)·(e + cos(ν))
+
+  This enables proper velocity-dependent calculations (e.g., drag, Doppler
+  via velocity projection) in future updates.
+
+REFERENCES:
+  [1] Vallado, D. A. (2013), Eq. 2-24, 2-36, 2-82
+      "Fundamentals of Astrodynamics and Applications"
+      Velocity in perifocal frame and PQW-to-IJK transformation
+
+
+================================================================================
+ CHANGE 10: EARTH ROTATION RATE CONSTANT (new constant)
+================================================================================
+
+File: models/constants.py — EARTH_ROTATION_RATE
+
+WHAT CHANGED:
+  Added EARTH_ROTATION_RATE = 7.2921159×10⁻⁵ rad/s as a centralized constant
+  instead of having it hard-coded in multiple locations. This is the sidereal
+  rotation rate.
+
+REFERENCES:
+  [1] IERS Conventions 2010, IERS Technical Note No. 36
+      Chapter 8: Tidal Variations in the Earth's Rotation
+      ω_E = 7.292115×10⁻⁵ rad/s
+
+  [2] McCarthy, D. D. and Petit, G. (2004)
+      IERS Conventions (2003), IERS Technical Note No. 32
+      https://www.iers.org/IERS/EN/Publications/TechnicalNotes/tn32.html
+
+
+================================================================================
+ CHANGE 11: ORBITAL ELEMENTS INSPECTION METHOD (new method)
+================================================================================
+
+File: models/orbit.py — get_orbital_elements_at_time()
+
+WHAT CHANGED:
+  New diagnostic method that returns the current (osculating) orbital elements
+  at any point in time, including the accumulated J2 perturbation effects.
+  Also reports RAAN and arg_perigee drift rates in °/day for verification.
+
+REFERENCES:
+  [1] Vallado, D. A. (2013), Section 9.6
+      Secular J2 propagation summary
+
+
+================================================================================
+ SUMMARY OF REALISM IMPROVEMENTS
+================================================================================
+
+  BEFORE                              AFTER
+  ──────                              ─────
+  Perfect sphere Earth                WGS-84 oblate spheroid (f=1/298.257)
+  No atmospheric visual               Atmospheric limb glow (Nishita approx)
+  Spherical ground station coords     WGS-84 ellipsoidal coordinates
+  Flat-plane coverage circle          Geodesic footprint (Rodrigues rotation)
+  Pure two-body Keplerian orbits      J2 secular perturbations (RAAN, ω, M)
+  ECI≈ECEF frame mixing bug           Proper GMST rotation ECI→ECEF
+  Wrong Molniya semi-major axis       Corrected a = 26557.5 km (from center)
+  No drag model                       Exponential atmosphere density model
+  No velocity computation             Full ECI velocity vector
+
+================================================================================
