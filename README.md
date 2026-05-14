@@ -61,7 +61,7 @@ Validation summary:
 - Rain coefficients cross-checked against ITU-R P.838-3 coefficient tables across 1 to 100 GHz
 - Intended accuracy target: education and preliminary trade studies, not final regulatory filing or flight qualification
 
-See the manuscript sources in [paper.tex](paper.tex), [final.tex](final.tex), and the compiled papers [paper.pdf](paper.pdf) / [final.pdf](final.pdf).
+See the manuscript sources in the IEEE Conference Paper.
 
 ## Visual Workflows
 
