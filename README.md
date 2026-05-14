@@ -305,4 +305,4 @@ If Sat-Link supports your teaching, research, or conference work, please cite th
 
 ## License
 
-This project is intended for educational and professional research use under the MIT License. If publishing the repository publicly, include a `LICENSE` file alongside this README.
+This project is intended for educational and professional research use under the MIT License.
