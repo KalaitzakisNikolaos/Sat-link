@@ -47,7 +47,7 @@ Sat-Link is designed for:
 | Orbit and geometry | LEO, MEO, GEO, HEO, slant range, elevation, azimuth, Doppler, propagation delay, ground tracks |
 | Interactive UI | Hub, complete link, waterfall, BER, constellation, ground track, link diagram, transponder, optional 3D view |
 | Advanced analysis | Scenario comparison, sweeps, availability, sensitivity, spectrum, Monte Carlo, fade dynamics, regulatory checks, interference, rain-fade simulator |
-| Reproducibility | Python source, paper assets, validation scenarios, PDF/CSV export, Windows installer build scripts |
+| Reproducibility | Python source, validation scenarios, README figures, PDF/CSV export, Windows installer build scripts |
 
 ## Validated Against Reference Link Budgets
 
@@ -67,7 +67,7 @@ Validation summary:
 - Rain coefficients cross-checked against ITU-R P.838-3 coefficient tables across 1 to 100 GHz
 - Intended accuracy target: education and preliminary trade studies, not final regulatory filing or flight qualification
 
-See the manuscript sources in the IEEE Conference Paper.
+The public repository keeps the application source, validation summary, README figures, and installer scripts needed to inspect and reproduce the simulator behavior.
 
 ## Visual Workflows
 
@@ -184,20 +184,26 @@ Sat-Link/
 |   |-- orbit.py                  # Keplerian/J2 orbit propagation, Doppler, TLE parsing
 |   |-- transponder.py            # Bent-pipe transponder, Friis cascade, Saleh/Rapp HPA models
 |   |-- modulation.py             # BER and constellation support
+|   |-- beam_pattern.py           # Antenna beam-pattern helpers
+|   |-- link_diagram.py           # Link-diagram model helpers
 |   |-- constants.py              # RF bands, orbit presets, ITU data tables, regulatory masks
 |   |-- satellite.py              # Satellite configuration presets
 |   `-- base_station.py           # Ground-station presets
 |-- gui/
 |   |-- visualizations/           # Link, BER, constellation, ground-track, transponder, 3D tabs
 |   |-- advanced_analysis/        # 13-panel advanced analysis dialog
+|   |-- core/                     # Shared Matplotlib canvas and splash screen
+|   |-- panels/                   # Dashboard and header panels
 |   |-- hub/                      # Base-station and satellite management
 |   |-- dialogs/                  # Info, history, math details
 |   `-- utils/                    # Export, presets, save/load, app paths
-|-- figures/                      # Paper and README figures
+|-- assets/                       # UI image assets
+|-- figures/                      # README figures
 |-- installer/                    # Inno Setup installer definition
-|-- release/                      # Built Windows installer output
-|-- paper.tex / final.tex         # Manuscript sources
-|-- paper.pdf / final.pdf         # Compiled manuscript artifacts
+|-- hmu.png                       # README university logo
+|-- satellite_icon.png            # README/app satellite icon
+|-- satellite_icon.ico            # Windows app icon
+|-- detailed_shapes.csv           # Shape data used by the application
 |-- build_installer.ps1           # PyInstaller + Inno Setup build pipeline
 |-- install.ps1                   # Windows dependency setup
 |-- run_advanced.ps1              # Windows launcher
@@ -208,10 +214,10 @@ Sat-Link/
 
 ### Option 1: Windows Installer
 
-Use the prebuilt installer if it is included in the repository release:
+Use the prebuilt installer from GitHub Releases if one is available:
 
 ```text
-release/SatLink-Setup-3.0.0.exe
+SatLink-Setup-<version>.exe
 ```
 
 ### Option 2: Windows PowerShell
@@ -278,6 +284,8 @@ Outputs:
 dist/Sat-Link/Sat-Link.exe
 release/SatLink-Setup-<version>.exe
 ```
+
+These build output folders are generated locally and are not tracked in the GitHub repository.
 
 ## Example Study Ideas
 
