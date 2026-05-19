@@ -3,8 +3,11 @@
 <p align="center">
   <b>An open-source, ITU-R-aligned satellite link-budget simulator for education, research, and early-stage mission trade studies.</b>
 </p>
+
 <p align="center">
-  <img src="hmu.png" alt="Hellenic Mediterranean University logo" width="220">
+  <img src="hmu.png" alt="Hellenic Mediterranean University logo" height="110">
+  &nbsp;&nbsp;&nbsp;
+  <img src="satellite_icon.png" alt="Sat-Link satellite icon" height="110">
 </p>
 
 <p align="center">
