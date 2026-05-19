@@ -28,6 +28,8 @@ user_presets.json
 *.bak
 
 # LaTeX generated files
+*.tex
+*.pdf
 *.aux
 *.bbl
 *.bcf
