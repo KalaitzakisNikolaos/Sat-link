@@ -51,7 +51,9 @@ tester.py
 CopyrightReceipt.pdf
 paper_MDPI.pdf
 Satlink_IEEE.pdf
+Definitions/
 mdpi_template/Definitions/
+txt_info/
 
 # OS/editor metadata
 .DS_Store
