@@ -170,9 +170,110 @@ Sat-Link is a desktop laboratory, not a single plot.
 | Transponder | Inspect RF cascade, HPA transfer curve, OBO, C/IM, AM/PM, and noise contribution |
 | 3D View | Optional PyVista globe with orbit playback, visibility controls, link lines, and TLE import |
 
-The Advanced dialog adds 13 analysis panels:
+The Advanced dialog turns the current link state into a 13-panel engineering study environment:
 
 `Scenarios`, `Elevation`, `Availability`, `Band Compare`, `Sensitivity`, `Time Series`, `Coverage`, `Spectrum`, `Monte Carlo`, `Fade Dynamics`, `Regulatory`, `Interference`, and `Rain Simulator`.
+
+## Advanced Analysis Suite
+
+The advanced window is designed as the "second layer" of Sat-Link. The main screen answers: does the current link close? The advanced suite asks the next engineering questions: which parameter dominates the margin, what happens under rain statistics, how much availability is left at SLA targets, whether adjacent satellites matter, whether the PFD mask is respected, and how a non-GEO pass evolves over time.
+
+The diagrams below use Mermaid so they render directly on GitHub.
+
+```mermaid
+flowchart LR
+    A["Current link inputs"] --> B["Deterministic link budget"]
+    B --> C["Advanced Analysis dialog"]
+    C --> D["Trade studies"]
+    C --> E["Reliability and fading"]
+    C --> F["Spectrum and regulation"]
+    C --> G["Operations and coverage"]
+
+    D --> D1["Scenarios"]
+    D --> D2["Elevation sweep"]
+    D --> D3["Band comparison"]
+    D --> D4["Sensitivity tornado"]
+
+    E --> E1["Rain availability"]
+    E --> E2["Monte Carlo"]
+    E --> E3["Fade dynamics"]
+    E --> E4["Rain simulator"]
+
+    F --> F1["Occupied spectrum"]
+    F --> F2["PFD compliance"]
+    F --> F3["Adjacent-satellite interference"]
+
+    G --> G1["LEO/MEO/HEO time series"]
+    G --> G2["Geographic coverage"]
+```
+
+| Advanced panel | Engineering question | Main outputs |
+|---|---|---|
+| Scenarios | How does the current design compare against practical alternatives? | Baseline, HPA boost, larger aperture, C-band, Ka-band, and optimized configuration comparison using link margin, EIRP, and `G/T`. |
+| Elevation | How fragile is the link at low look angles? | Margin vs. elevation from 5 to 90 degrees, rain loss vs. elevation, FSPL trend, and current-elevation marker. |
+| Availability | What rain rate can the link survive before SLA quality degrades? | Availability curve vs. rain rate, 99.9%, 99.99%, and 99.999% target lines, rain-zone annotations, and current margin context. |
+| Band Compare | What is the trade-off between L/S/C/X/Ku/Ka/Q/V bands? | Per-band FSPL, rain attenuation, atmospheric loss, total path loss, and current-band highlight. |
+| Sensitivity | Which knobs are worth optimizing first? | Tornado diagram for TX power, antenna gain, RX aperture, frequency, rain rate, elevation, and system temperature. |
+| Time Series | How does a moving satellite pass evolve? | LEO/MEO/HEO elevation, link margin, Doppler shift, and handover zones; GEO mode explains why the geometry is stationary. |
+| Coverage | Where on Earth does the link close? | Longitude/latitude margin contours, satellite nadir marker, ground-station marker, visibility boundary, and footprint-style coverage view. |
+| Spectrum | Does the waveform fit the assigned bandwidth cleanly? | Raised-cosine spectrum, symbol-rate markers, occupied bandwidth, -3 dB bandwidth, noise floor, emission-mask overlay, spectral efficiency, and estimated data rate. |
+| Monte Carlo | What availability emerges when weather and HPA uncertainty vary statistically? | 10,000-sample margin PDF/CDF, outage threshold, confidence intervals, rain-rate vs. attenuation scatter, outage samples, and final link status. |
+| Fade Dynamics | How long and how often do rain fades last? | 24-hour synthetic fade time series, fade-depth exceedance, fade-duration distribution, event statistics, total outage time, and availability. |
+| Regulatory | Does the downlink respect ITU-style PFD and off-axis masks? | PFD vs. elevation, PFD limits by frequency band, EIRP density masks, compliance margin, GSO/NGSO status, and summary report. |
+| Interference | How much do adjacent satellites degrade the link? | C/I vs. orbital spacing, ITU-R S.465 off-axis receive pattern, combined `C/(N+I)`, degradation at typical spacing, and interference budget table. |
+| Rain Simulator | What does rain fading look like as a live stochastic process? | Animated Maseng-Bakken/P.1853-style attenuation, rain intensity, fade slope histogram, CCDF, fade-duration CDF, climate-zone selector, speed control, and outage statistics. |
+
+### Stochastic Reliability Layer
+
+The stochastic panels reuse the deterministic path-loss and atmospheric functions, then add random variables around the environment and operating point. The Monte Carlo engine draws rain/no-rain states, rain rates, cloud liquid water, water vapor, scintillation-related atmospheric loss, and input back-off uncertainty; the fade tools synthesize time-correlated rain attenuation so the user can inspect outage duration rather than only a single static margin value.
+
+```mermaid
+flowchart TB
+    P["Clear-sky margin"] --> M["Monte Carlo engine"]
+    R["Rain-rate distribution"] --> M
+    C["Cloud liquid water"] --> M
+    W["Water vapor variation"] --> M
+    I["IBO / HPA drift"] --> M
+    M --> PDF["Margin PDF"]
+    M --> CDF["Margin CDF"]
+    M --> AV["Availability and outage samples"]
+
+    P --> FD["Fade dynamics"]
+    R --> FD
+    FD --> TS["24-hour attenuation trace"]
+    FD --> EX["Fade exceedance"]
+    FD --> DU["Fade duration statistics"]
+
+    P --> MB["Live rain simulator"]
+    MB --> CCDF["Attenuation CCDF"]
+    MB --> EV["Fade events and outage time"]
+```
+
+### Link-Budget Data Path
+
+```mermaid
+flowchart LR
+    GS1["Ground station TX"] --> U1["Uplink EIRP"]
+    U1 --> U2["Uplink path loss"]
+    U2 --> SAT["Satellite transponder"]
+    SAT --> TP["Friis cascade, HPA back-off, C/IM"]
+    TP --> D1["Downlink EIRP"]
+    D1 --> D2["Downlink path loss"]
+    D2 --> GS2["Ground station RX"]
+    GS2 --> OUT["C/N0, Eb/N0, BER, margin"]
+
+    WX["Gas, rain, cloud, scintillation"] --> U2
+    WX --> D2
+    MOD["MODCOD and bitrate"] --> OUT
+```
+
+In practice, this makes Sat-Link useful for more than a single link-budget snapshot:
+
+- Teaching: students can see how FSPL, weather, `G/T`, HPA back-off, coding, and modulation interact instead of memorizing isolated formulas.
+- Design trades: aperture, EIRP, frequency band, elevation, coding gain, and rain margin can be compared in the same tool surface.
+- Availability planning: rain-rate assumptions can be turned into outage probability, fade duration, and SLA-style availability targets.
+- Operations: non-GEO passes can be inspected for Doppler, handover timing, low-elevation weakness, and coverage boundaries.
+- Coordination checks: PFD limits, EIRP density masks, and adjacent-satellite C/I expose first-order regulatory and interference risks early.
 
 ## Repository Structure
 
