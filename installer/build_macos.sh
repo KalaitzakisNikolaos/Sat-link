@@ -110,8 +110,20 @@ mkdir -p "$STAGING" release
 ditto "$APP" "$STAGING/Sat-Link.app"
 # The Applications shortcut is what makes the classic "drag the app here" window.
 ln -s /Applications "$STAGING/Applications"
-rm -f "$DMG"
-hdiutil create -volname "Sat-Link" -srcfolder "$STAGING" -ov -format UDZO "$DMG"
+# hdiutil sometimes fails with "Resource busy" while macOS is still scanning the freshly
+# written files (Spotlight, XProtect), so wait and retry a few times before giving up.
+for attempt in 1 2 3 4 5; do
+    rm -f "$DMG"
+    if hdiutil create -volname "Sat-Link" -srcfolder "$STAGING" -ov -format UDZO "$DMG"; then
+        break
+    fi
+    if [ "$attempt" -eq 5 ]; then
+        echo "hdiutil failed $attempt times; giving up." >&2
+        exit 1
+    fi
+    echo "hdiutil failed (attempt $attempt of 5); retrying in 10 s..." >&2
+    sleep 10
+done
 
 echo
 echo "Installer build complete: $DMG"
