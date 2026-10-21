@@ -452,6 +452,7 @@ git push origin v3.1.0
 - A tag with a suffix (for example `v3.1.0-beta.1`) is published as a **pre-release**, which is useful for testing before a final release.
 - The installers take their version number from the tag (`v3.1.0-beta.1` → `3.1.0`).
 - The workflow can also be run by hand from the **Actions** tab; the files then appear under the run's **Artifacts** instead of a release.
+- Pushes to the `installer` branch make test builds of all installers (under **Artifacts**, version `0.0.0`) without publishing anything.
 
 ## Example Study Ideas
 

@@ -7,8 +7,12 @@ name: Build installers
 on:
   # Pushing a tag like v3.0.0 (or v3.0.0-beta.1) builds everything and publishes a GitHub Release.
   # A tag with a "-" suffix becomes a pre-release, e.g. for student testing before merging to main.
+  # Pushing to the installer branch makes test builds only (files under "Artifacts", no release),
+  # so changes to the build scripts are checked on all three systems before a release.
   push:
     tags: ["v*"]
+    branches: ["installer"]
+    paths-ignore: ["**.md", "figures/**"] # docs-only changes need no rebuild (not applied to tags)
   # Manual run from the Actions tab; the files appear under the run's "Artifacts".
   workflow_dispatch:
     inputs:
@@ -35,8 +39,10 @@ jobs:
           if [ "$REF_TYPE" = "tag" ]; then
             V="${TAG#v}"   # v3.0.0-beta.1 -> 3.0.0-beta.1
             V="${V%%-*}"   # -> 3.0.0 (installers need a plain numeric version)
-          else
+          elif [ -n "$INPUT_VERSION" ]; then
             V="$INPUT_VERSION"
+          else
+            V="0.0.0"      # branch push: test build, not a real version
           fi
           echo "version=$V" >> "$GITHUB_OUTPUT"
 
