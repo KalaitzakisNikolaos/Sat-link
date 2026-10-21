@@ -20,6 +20,8 @@ release/
 *.spec
 *.exe
 *.msi
+*.dmg
+*.AppImage
 *.zip
 
 # Local/user state

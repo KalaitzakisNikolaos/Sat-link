@@ -305,8 +305,12 @@ Sat-Link/
 |   `-- detailed_shapes.csv       # World map outlines for the ground track
 |-- figures/                      # README figures
 |-- installer/
-|   |-- build_installer.ps1       # PyInstaller + Inno Setup build pipeline
-|   `-- SatLinkSetup.iss          # Inno Setup installer definition
+|   |-- build_installer.ps1       # Windows: PyInstaller + Inno Setup build pipeline
+|   |-- SatLinkSetup.iss          # Windows: Inno Setup installer definition
+|   |-- build_macos.sh            # macOS: PyInstaller .app + .dmg build
+|   `-- build_linux.sh            # Linux: PyInstaller + AppImage build
+|-- .github/workflows/
+|   `-- release.yml               # Builds all installers on GitHub and publishes releases
 |-- scripts/
 |   |-- install.ps1               # Windows dependency setup (creates venv)
 |   |-- run_advanced.ps1          # Windows launcher
@@ -317,13 +321,20 @@ Sat-Link/
 
 ## Quick Start
 
-### Option 1: Windows Installer
+### Option 1: Installer (Windows / macOS / Linux)
 
-Use the prebuilt installer from GitHub Releases if one is available:
+Download the installer for your system from GitHub Releases:
 
-```text
-SatLink-Setup-<version>.exe
-```
+| System | File |
+|---|---|
+| Windows 10/11 (64-bit) | `SatLink-Setup-<version>.exe` |
+| macOS, Apple Silicon (M1 and newer) | `SatLink-<version>-macOS-arm64.dmg` |
+| macOS, Intel | `SatLink-<version>-macOS-x86_64.dmg` |
+| Linux, 64-bit (glibc 2.35+, e.g. Ubuntu 22.04+) | `SatLink-<version>-linux-x86_64.AppImage` |
+
+On macOS, open the `.dmg` and drag **Sat-Link** into **Applications**. The app is not signed with an Apple Developer ID, so the first launch is blocked: open **System Settings → Privacy & Security** and click **Open Anyway** next to the Sat-Link message.
+
+On Linux, make the AppImage executable (`chmod +x SatLink-*.AppImage`) and run it; no installation is needed.
 
 ### Option 2: Windows PowerShell
 
@@ -401,6 +412,46 @@ release/SatLink-Setup-<version>.exe
 ```
 
 These build output folders are generated locally and are not tracked in the GitHub repository.
+
+## Build the macOS and Linux Installers
+
+Each system can only build its own app: a Mac builds the `.dmg` (for that Mac's CPU), Linux builds the AppImage.
+
+**On a Mac:**
+
+```bash
+python3 -m venv .venv
+bash installer/build_macos.sh 3.0.0 .venv/bin/python
+```
+
+**On Linux** (the Qt system libraries listed by the script must be installed, because they are bundled into the AppImage):
+
+```bash
+python3 -m venv .venv
+bash installer/build_linux.sh 3.0.0 .venv/bin/python
+```
+
+Outputs:
+
+```text
+release/SatLink-<version>-macOS-<arm64|x86_64>.dmg
+release/SatLink-<version>-linux-x86_64.AppImage
+```
+
+## Publishing a Release (all installers, no Mac or Linux PC needed)
+
+The `Build installers` workflow (`.github/workflows/release.yml`) builds the Windows installer, both macOS `.dmg` files, and the Linux AppImage on GitHub's machines, opens each app once as a smoke test, and publishes them as a GitHub Release.
+
+Push a version tag to start it:
+
+```bash
+git tag v3.1.0
+git push origin v3.1.0
+```
+
+- A tag with a suffix (for example `v3.1.0-beta.1`) is published as a **pre-release**, which is useful for testing before a final release.
+- The installers take their version number from the tag (`v3.1.0-beta.1` → `3.1.0`).
+- The workflow can also be run by hand from the **Actions** tab; the files then appear under the run's **Artifacts** instead of a release.
 
 ## Example Study Ideas
 
