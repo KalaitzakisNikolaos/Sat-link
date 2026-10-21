@@ -5,6 +5,7 @@ import os
 import csv
 from datetime import datetime
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QApplication
+from gui.utils.app_paths import get_resource_path
 
 
 def export_pdf(mw):
@@ -117,9 +118,7 @@ def export_pdf(mw):
                         va='center')
 
             # Logo — placed on the right side to avoid overlap
-            logo_path = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(
-                    os.path.abspath(__file__)))), 'hmu.png')
+            logo_path = get_resource_path('assets', 'hmu.png')
             if os.path.isfile(logo_path):
                 try:
                     from matplotlib.offsetbox import OffsetImage, AnnotationBbox

@@ -3,6 +3,7 @@
 import os
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QPainter, QLinearGradient, QColor, QFont
+from gui.utils.app_paths import get_resource_path
 
 # IEEE color scheme
 IEEE_COLORS = {
@@ -42,8 +43,7 @@ def create_splash_screen():
     painter.drawRoundedRect(0, 0, 620, 240, 24, 24)
 
     # Draw the university logo
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    logo_path = os.path.join(base_dir, "hmu.png")
+    logo_path = get_resource_path("assets", "hmu.png")
     logo_pix = QPixmap(logo_path)
     if not logo_pix.isNull():
         logo_size = 130

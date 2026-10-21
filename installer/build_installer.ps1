@@ -24,7 +24,8 @@ function Resolve-IsccPath {
 
     $candidates = @(
         "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
-        "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
+        "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+        "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
     )
 
     foreach ($path in $candidates) {
@@ -60,12 +61,16 @@ function Invoke-PyInstallerBuild {
     )
 
     # Stream PyInstaller logs to console, but keep function output as a single numeric exit code.
+    # PyInstaller logs to stderr; under Windows PowerShell 5.1 with "Stop", 2>&1 would turn
+    # every log line into a terminating error, so relax it locally and rely on the exit code.
+    $ErrorActionPreference = "Continue"
     & $PythonExe -m PyInstaller @PyInstallerArgs 2>&1 | Out-Host
     $exitCode = $LASTEXITCODE
     return [int]$exitCode
 }
 
-$repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+# This script lives in installer\; all build paths are relative to the repo root.
+$repoRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Set-Location $repoRoot
 
 $exePath = "dist\Sat-Link\Sat-Link.exe"
@@ -118,12 +123,8 @@ if (-not $SkipExeBuild) {
         "--noconfirm",
         "--windowed",
         "--name", "Sat-Link",
-        "--icon", "satellite_icon.ico",
+        "--icon", "assets\satellite_icon.ico",
         "--add-data", "assets;assets",
-        "--add-data", "txt_info;txt_info",
-        "--add-data", "hmu.png;.",
-        "--add-data", "detailed_shapes.csv;.",
-        "--add-data", "satellite_icon.ico;.",
         "--collect-all", "pyvista",
         "--collect-all", "pyvistaqt",
         "--collect-data", "pyqtgraph",
@@ -214,5 +215,8 @@ if (-not (Test-Path $issFile)) {
 }
 
 & $iscc $issFile "/DAppVersion=$Version"
+if ($LASTEXITCODE -ne 0) {
+    throw "Inno Setup compile failed (exit code: $LASTEXITCODE). If the output file is in use, close any running SatLink-Setup window and retry."
+}
 
 Write-Host "Installer build complete. Output is under release\" -ForegroundColor Green

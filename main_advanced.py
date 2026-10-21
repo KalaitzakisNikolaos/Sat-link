@@ -6,8 +6,6 @@ import numpy as np
 # Suppress Qt font enumeration warnings
 os.environ['QT_LOGGING_RULES'] = '*.debug=false;qt.qpa.fonts=false'
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pdfs'))
-
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QTabWidget, QLabel, QComboBox, 
                              QDoubleSpinBox, QSpinBox, QPushButton, QGroupBox,
@@ -3401,7 +3399,7 @@ def main():
     app.setApplicationDisplayName("Sat-Link")
     app.setStyle('Fusion')
 
-    icon_path = get_resource_path("satellite_icon.ico")
+    icon_path = get_resource_path("assets", "satellite_icon.ico")
     if os.path.isfile(icon_path):
         app_icon = QIcon(icon_path)
         app.setWindowIcon(app_icon)

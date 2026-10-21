@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                               QPushButton, QFrame, QScrollArea, QWidget)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QPixmap
+from gui.utils.app_paths import get_resource_path
 
 
 def show_info_dialog(mw):
@@ -64,8 +65,7 @@ def show_info_dialog(mw):
     header_layout.setSpacing(20)
 
     # Logo
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    logo_path = os.path.join(base_dir, "hmu.png")
+    logo_path = get_resource_path("assets", "hmu.png")
     logo_pix = QPixmap(logo_path)
     
     if not logo_pix.isNull():

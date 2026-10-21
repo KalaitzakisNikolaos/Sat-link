@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 
 from gui.core.mpl_canvas import MplCanvas
 from models.orbit import create_satellite_from_type
+from gui.utils.app_paths import get_resource_path
 
 _map_cache = None
 
@@ -17,8 +18,7 @@ def _load_map():
     if _map_cache is not None:
         return _map_cache
 
-    path = os.path.join(os.path.dirname(__file__), '..', '..', 'detailed_shapes.csv')
-    path = os.path.normpath(path)
+    path = get_resource_path('assets', 'detailed_shapes.csv')
     if not os.path.exists(path):
         _map_cache = []
         return _map_cache

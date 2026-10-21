@@ -5,9 +5,9 @@
 </p>
 
 <p align="center">
-  <img src="hmu.png" alt="Hellenic Mediterranean University logo" height="110">
+  <img src="assets/hmu.png" alt="Hellenic Mediterranean University logo" height="110">
   &nbsp;&nbsp;&nbsp;
-  <img src="satellite_icon.png" alt="Sat-Link satellite icon" height="110">
+  <img src="assets/satellite_icon.png" alt="Sat-Link satellite icon" height="110">
 </p>
 
 <p align="center">
@@ -298,16 +298,20 @@ Sat-Link/
 |   |-- hub/                      # Base-station and satellite management
 |   |-- dialogs/                  # Info, history, math details
 |   `-- utils/                    # Export, presets, save/load, app paths
-|-- assets/                       # UI image assets
+|-- assets/                       # Runtime resources bundled with the app
+|   |-- hmu.png                   # University logo (splash, header, PDF report)
+|   |-- satellite_icon.ico        # Windows app icon
+|   |-- satellite_icon.png        # README/app satellite icon
+|   `-- detailed_shapes.csv       # World map outlines for the ground track
 |-- figures/                      # README figures
-|-- installer/                    # Inno Setup installer definition
-|-- hmu.png                       # README university logo
-|-- satellite_icon.png            # README/app satellite icon
-|-- satellite_icon.ico            # Windows app icon
-|-- detailed_shapes.csv           # Shape data used by the application
-|-- build_installer.ps1           # PyInstaller + Inno Setup build pipeline
-|-- install.ps1                   # Windows dependency setup
-|-- run_advanced.ps1              # Windows launcher
+|-- installer/
+|   |-- build_installer.ps1       # PyInstaller + Inno Setup build pipeline
+|   `-- SatLinkSetup.iss          # Inno Setup installer definition
+|-- scripts/
+|   |-- install.ps1               # Windows dependency setup (creates venv)
+|   |-- run_advanced.ps1          # Windows launcher
+|   |-- install.sh                # Linux/macOS dependency setup (creates venv)
+|   `-- run.sh                    # Linux/macOS launcher
 `-- requirements.txt              # Python dependencies
 ```
 
@@ -324,11 +328,22 @@ SatLink-Setup-<version>.exe
 ### Option 2: Windows PowerShell
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\install.ps1
-powershell -ExecutionPolicy Bypass -File .\run_advanced.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\run_advanced.ps1
 ```
 
-### Option 3: Manual Python Environment
+### Option 3: Linux / macOS
+
+```bash
+bash scripts/install.sh
+bash scripts/run.sh
+```
+
+`install.sh` needs Python 3.9+ (`sudo apt install python3 python3-venv` on Debian/Ubuntu, `brew install python` on macOS).
+
+On Linux, Qt also needs a few X11 system libraries that pip cannot install. `install.sh` checks for them and prints the exact `apt install` line if any are missing (fresh/minimal Ubuntu installs usually need it).
+
+### Option 4: Manual Python Environment
 
 ```powershell
 python -m venv venv
@@ -338,7 +353,7 @@ python -m pip install -r requirements.txt
 python main_advanced.py
 ```
 
-For Linux or macOS, create a Python 3.9+ virtual environment, install `requirements.txt`, and run `python main_advanced.py`. The GUI and 3D stack depend on local Qt/OpenGL support.
+On Linux or macOS, activate with `source venv/bin/activate` instead. The GUI and 3D stack depend on local Qt/OpenGL support.
 
 ## Requirements
 
@@ -348,8 +363,6 @@ Core stack:
 - PyQt5 and PyQtGraph
 - NumPy, SciPy, Pandas, Matplotlib, Seaborn
 - PyVista and PyVistaQt for optional 3D rendering
-- Skyfield, SGP4, PyOrbital, and scikit-rf support libraries
-- ReportLab for report generation support
 
 Install everything with:
 
@@ -362,21 +375,22 @@ python -m pip install -r requirements.txt
 Requirements:
 
 - Python 3.9+
-- Inno Setup 6, with `ISCC.exe` available
+- Inno Setup 6 (e.g. `winget install JRSoftware.InnoSetup`); per-machine and per-user installs are both detected
 
 Build command:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\build_installer.ps1 -Version 3.0.0
+powershell -ExecutionPolicy Bypass -File .\installer\build_installer.ps1 -Version 3.0.0
 ```
 
 Useful build flags:
 
 ```powershell
-.\build_installer.ps1 -Clean
-.\build_installer.ps1 -SkipDependencies
-.\build_installer.ps1 -SkipExeBuild
-.\build_installer.ps1 -SkipInstaller
+.\installer\build_installer.ps1 -Clean
+.\installer\build_installer.ps1 -SkipDependencies
+.\installer\build_installer.ps1 -SkipExeBuild
+.\installer\build_installer.ps1 -SkipInstaller
+.\installer\build_installer.ps1 -PythonExe .\.venv\Scripts\python.exe
 ```
 
 Outputs:

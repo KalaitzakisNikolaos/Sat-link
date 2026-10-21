@@ -1,4 +1,7 @@
 # Installation script for Windows
+# Run from anywhere; the venv is created in the repo root.
+Set-Location (Split-Path -Parent $PSScriptRoot)
+
 Write-Host "Installing Satellite Downlink Simulator..." -ForegroundColor Green
 Write-Host ""
 
@@ -43,6 +46,5 @@ Write-Host "Installation completed successfully!" -ForegroundColor Green
 Write-Host "=======================================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "To run the simulator:" -ForegroundColor Cyan
-Write-Host "  1. Basic version:   .\run.ps1" -ForegroundColor White
-Write-Host "  2. Advanced version: .\run_advanced.ps1" -ForegroundColor White
+Write-Host "  .\scripts\run_advanced.ps1" -ForegroundColor White
 Write-Host ""

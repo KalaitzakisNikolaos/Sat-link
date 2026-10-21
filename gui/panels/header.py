@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QLabel, QPushButton,
                               QMenu, QFrame)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QKeySequence, QPixmap
+from gui.utils.app_paths import get_resource_path
 
 
 def create_header(mw):
@@ -174,8 +175,7 @@ def create_header(mw):
     layout.addWidget(mw.metrics_btn)
 
     # University logo - top right
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    logo_path = os.path.join(base_dir, "hmu.png")
+    logo_path = get_resource_path("assets", "hmu.png")
     logo_pix = QPixmap(logo_path)
     if not logo_pix.isNull():
         logo_label = QLabel()
