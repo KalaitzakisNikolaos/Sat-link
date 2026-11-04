@@ -74,6 +74,8 @@ class Earth3DVisualization(QWidget):
         return f'{tag}_{self._nn}'
 
     def _init_earth(self):
+        # why the textured earth could not be used (None = textured), shown by --self-test
+        self.earth_texture_error = None
         # try pyvista's textured earth first
         try:
             mesh = pv_examples.planets.load_earth(
@@ -84,7 +86,8 @@ class Earth3DVisualization(QWidget):
             mesh.points[:, 1] *= -1
             mesh.points[:, 2] *= _OBLATE
             self.plotter.add_mesh(mesh, texture=tex, smooth_shading=True, name='earth')
-        except Exception:
+        except Exception as e:
+            self.earth_texture_error = f'{type(e).__name__}: {e}'
             # parametric ellipsoid fallback (no texture)
             try:
                 la = np.linspace(-np.pi/2, np.pi/2, 80)

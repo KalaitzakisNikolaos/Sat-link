@@ -2373,7 +2373,13 @@ class SatelliteSimulatorGUIAdvanced(QMainWindow):
         """Destroy a tab's real content and replace with a lightweight placeholder."""
         if not self._tab_built.get(index):
             return
-        _label = self._tab_defs[index][0]
+        _label, _creator, is_3d = self._tab_defs[index]
+        if is_3d and hasattr(self, 'earth_3d'):
+            # A VTK render window must be closed before its widget is deleted, or macOS crashes
+            try:
+                self.earth_3d.plotter.close()
+            except Exception:
+                pass
         self.viz_tabs.blockSignals(True)
         current = self.viz_tabs.currentIndex()
         old = self.viz_tabs.widget(index)
@@ -2395,9 +2401,11 @@ class SatelliteSimulatorGUIAdvanced(QMainWindow):
         2. Build the newly selected tab fresh.
         3. Push latest data into it.
         """
-        # Tear down all other built tabs so only one is alive at a time
+        # Tear down all other built tabs so only one is alive at a time.
+        # The 3D view stays alive: rebuilding the VTK globe on every visit is slow, and
+        # destroying its render window when leaving the tab crashed the app on macOS.
         for idx in list(self._tab_built.keys()):
-            if idx != index and self._tab_built.get(idx):
+            if idx != index and self._tab_built.get(idx) and not self._tab_defs[idx][2]:
                 self._teardown_tab(idx)
         
         # Build (or rebuild) the target tab
@@ -3264,15 +3272,14 @@ class SatelliteSimulatorGUIAdvanced(QMainWindow):
         txt = "\u23F8" if self.animation_running else "\u25B6"  # ⏸ / ▶
         tip = "Pause" if self.animation_running else "Play"
         
-        # 3D View Button
-        if hasattr(self, 'btn_play_pause'):
-            self.btn_play_pause.setText(txt)
-            self.btn_play_pause.setToolTip(tip)
-            
-        # Ground Track Button
-        if hasattr(self, 'btn_orbit_play'):
-            self.btn_orbit_play.setText(txt)
-            self.btn_orbit_play.setToolTip(tip)
+        # 3D View Button / Ground Track Button (may be deleted by lazy tab teardown)
+        for name in ('btn_play_pause', 'btn_orbit_play'):
+            if hasattr(self, name):
+                try:
+                    getattr(self, name).setText(txt)
+                    getattr(self, name).setToolTip(tip)
+                except RuntimeError:
+                    pass
     
     def _update_tracking_cards(self):
         """Update tracking cards — delegated"""
@@ -3393,7 +3400,41 @@ class SatelliteSimulatorGUIAdvanced(QMainWindow):
         """Load scenario preset — delegated"""
         _mod_preset(self, preset_name)
 
+_crash_log = None  # kept open so faulthandler can write to it when the process dies
+
+
+def _install_error_logging():
+    """Log uncaught errors to the user data folder instead of letting them kill the app.
+
+    PyQt5 aborts the whole app on any exception raised inside a slot unless sys.excepthook is
+    replaced, and a frozen windowed app has no console, so Python errors go to error.log and
+    native crashes (e.g. segfaults inside VTK or Qt) to crash.log.
+    """
+    import faulthandler
+    import traceback
+    global _crash_log
+    data_dir = get_user_data_dir()
+    try:
+        _crash_log = open(os.path.join(data_dir, 'crash.log'), 'a', encoding='utf-8')
+        faulthandler.enable(file=_crash_log, all_threads=True)
+    except OSError:
+        pass
+
+    def log_exception(exc_type, exc, tb):
+        text = ''.join(traceback.format_exception(exc_type, exc, tb))
+        try:
+            with open(os.path.join(data_dir, 'error.log'), 'a', encoding='utf-8') as f:
+                f.write(f"--- {datetime.now():%Y-%m-%d %H:%M:%S} ---\n{text}\n")
+        except OSError:
+            pass
+        if sys.stderr is not None:
+            sys.stderr.write(text)
+
+    sys.excepthook = log_exception
+
+
 def main():
+    _install_error_logging()
     app = QApplication(sys.argv)
     app.setApplicationName("Sat-Link")
     app.setApplicationDisplayName("Sat-Link")
@@ -3427,6 +3468,13 @@ def main():
 
     # Close splash and show window
     QTimer.singleShot(2000, lambda: (splash.close(), window.show()))
+
+    # CI smoke tests: walk through the tabs and quit with a pass/fail exit code
+    if '--self-test' in sys.argv:
+        from gui.selftest import start_self_test
+        i = sys.argv.index('--self-test')
+        out_dir = sys.argv[i + 1] if i + 1 < len(sys.argv) else os.path.abspath('selftest')
+        QTimer.singleShot(4000, lambda: start_self_test(app, window, out_dir))
 
     sys.exit(app.exec())
 

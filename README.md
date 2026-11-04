@@ -453,6 +453,8 @@ git push origin v3.1.0
 - The installers take their version number from the tag (`v3.1.0-beta.1` → `3.1.0`).
 - The workflow can also be run by hand from the **Actions** tab; the files then appear under the run's **Artifacts** instead of a release.
 - Pushes to the `installer` branch make test builds of all installers (under **Artifacts**, version `0.0.0`) without publishing anything.
+- Every build runs the app's self-test (`Sat-Link --self-test <folder>`, see `gui/selftest.py`): it opens every tab, switches in and out of the 3D view, downloads a TLE, and saves screenshots under the run's `selftest-*` artifacts.
+- If the app crashes on a user's machine, Python errors are written to `error.log` and native crashes to `crash.log` in the Sat-Link user data folder (`%APPDATA%\Sat-Link`, `~/Library/Application Support/Sat-Link`, or `~/.config/Sat-Link`).
 
 ## Example Study Ideas
 

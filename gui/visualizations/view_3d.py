@@ -1,6 +1,8 @@
 """3D Earth view with satellite orbits, ground stations and TLE import."""
 
 import numpy as np
+import ssl
+import urllib.parse
 import urllib.request
 import json
 try:
@@ -35,6 +37,28 @@ def _widget_alive(widget):
         return True
     except RuntimeError:
         return False
+
+
+def _ssl_context():
+    """HTTPS context with certifi's CA bundle.
+
+    The frozen macOS app's bundled OpenSSL looks for CA certificates in a folder that does not
+    exist on users' Macs, so the default context fails with CERTIFICATE_VERIFY_FAILED there.
+    """
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return ssl.create_default_context()
+
+
+def fetch_tle_text(norad_id, timeout=10):
+    """Download the TLE of one satellite from CelesTrak and return it as text."""
+    url = ("https://celestrak.org/NORAD/elements/gp.php?"
+           + urllib.parse.urlencode({'CATNR': norad_id, 'FORMAT': 'TLE'}))
+    req = urllib.request.Request(url, headers={'User-Agent': 'SatLinkBudget/1.0'})
+    with urllib.request.urlopen(req, timeout=timeout, context=_ssl_context()) as resp:
+        return resp.read().decode('utf-8').strip()
 
 
 def _place_sat(plotter, pos, radius_frac, color, name, label=None, label_name=None):
@@ -645,10 +669,7 @@ def _show_tle_dialog(mw):
             QMessageBox.warning(dlg, "Error", "Please enter a NORAD Catalog ID.")
             return
         try:
-            url = f"https://celestrak.org/NORAD/elements/gp.php?CATNR={nid}&FORMAT=TLE"
-            req = urllib.request.Request(url, headers={'User-Agent': 'SatLinkBudget/1.0'})
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                data = resp.read().decode('utf-8').strip()
+            data = fetch_tle_text(nid)
             if not data or 'No GP data found' in data:
                 QMessageBox.warning(dlg, "Not Found", f"No TLE data found for NORAD ID {nid}")
                 return

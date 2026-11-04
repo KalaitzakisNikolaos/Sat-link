@@ -18,3 +18,6 @@ pyqtgraph>=0.13.0
 # 3D View
 pyvista>=0.43.0
 pyvistaqt>=0.11.0
+
+# HTTPS certificates for the TLE download (the frozen macOS app has no usable system CA path)
+certifi
