@@ -4,7 +4,9 @@
 PyQt5>=5.15.10
 
 # Scientific Computing
-numpy>=1.26.0
+# NumPy 2.4+ only runs on x86-64-v2 CPUs (SSE4.2/POPCNT, ~2009+) and fails on older PCs with
+# "NumPy was built with baseline optimizations: (X86_V2)"; 2.3.x still runs on SSE3 CPUs.
+numpy>=1.26.0,<2.4
 scipy>=1.11.0
 pandas>=2.1.0
 
