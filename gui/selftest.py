@@ -65,6 +65,11 @@ def start_self_test(app, window, out_dir):
             f' | frozen={getattr(sys, "frozen", False)}')
         say(f'    numpy {numpy.__version__} baseline {_multiarray_umath.__cpu_baseline__} | Qt {QT_VERSION_STR}')
         say(f'    default CA paths: {ssl.get_default_verify_paths()}')
+        if os.environ.get('SATLINK_SELFTEST_NO_3D'):
+            # GitHub's Windows VMs have no GPU driver; VTK segfaults in their basic OpenGL
+            state['has_gl'] = False
+            say('    3D steps disabled by SATLINK_SELFTEST_NO_3D')
+            return
         try:
             import vtk
             rw = vtk.vtkRenderWindow()
@@ -102,10 +107,18 @@ def start_self_test(app, window, out_dir):
         if e3d is None:
             raise RuntimeError('3D view was not built')
         say(f'    earth texture error: {getattr(e3d, "earth_texture_error", None)}')
-        rw = e3d.plotter.ren_win
-        for line in (rw.ReportCapabilities() or '').splitlines()[:4]:
-            say('    ' + line.strip())
-        say(f'    render window size {rw.GetSize()} | actors {len(e3d.plotter.renderer.actors)}')
+        # The Qt OpenGL context VTK renders into; macOS needs 3.2 core (see _set_3d_opengl_format).
+        # Only Qt calls here: VTK's own GL queries segfault when there is no usable context.
+        ctx = e3d.plotter.context()
+        if ctx is None or not ctx.isValid():
+            raise RuntimeError('the 3D view has no OpenGL context')
+        fmt = ctx.format()
+        profile = {0: 'none', 1: 'core', 2: 'compatibility'}.get(int(fmt.profile()), fmt.profile())
+        say(f'    OpenGL context {fmt.majorVersion()}.{fmt.minorVersion()} {profile}'
+            f' | actors {len(e3d.plotter.renderer.actors)}')
+        if (fmt.majorVersion(), fmt.minorVersion()) < (3, 2):
+            raise RuntimeError('OpenGL context older than 3.2: VTK cannot render')
+        screenshot('3d_view_before_vtk_readback')
         img = e3d.plotter.screenshot(os.path.join(out_dir, '3d_vtk.png'), return_img=True)
         say(f'    saved 3d_vtk.png | pixel std {float(img.std()):.1f} (near 0 = blank)')
         if float(img.std()) < 2.0:

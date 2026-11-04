@@ -3433,8 +3433,27 @@ def _install_error_logging():
     sys.excepthook = log_exception
 
 
+def _set_3d_opengl_format():
+    """Request the desktop OpenGL 3.2 core context the 3D view (VTK) needs.
+
+    pyvistaqt sets this as the process-wide default itself, but only when its widget is created,
+    and it only takes effect before the first window exists. The 3D tab is built lazily, long
+    after the main window, so macOS then handed it a legacy OpenGL 2.1 context and the 3D view
+    stayed empty (Windows and Linux accept the legacy context, which hid the problem).
+    """
+    if not HAS_3D:
+        return
+    try:
+        from pyvistaqt.rwi import _default_format
+        from PyQt5.QtGui import QSurfaceFormat
+        QSurfaceFormat.setDefaultFormat(_default_format())
+    except Exception as e:
+        print(f"Could not set the OpenGL format for the 3D view: {type(e).__name__}: {e}")
+
+
 def main():
     _install_error_logging()
+    _set_3d_opengl_format()
     app = QApplication(sys.argv)
     app.setApplicationName("Sat-Link")
     app.setApplicationDisplayName("Sat-Link")

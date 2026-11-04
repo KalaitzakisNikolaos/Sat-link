@@ -71,6 +71,10 @@ jobs:
 
       - name: Self-test (every tab, 3D view, TLE download; see gui/selftest.py)
         shell: pwsh
+        env:
+          # The Windows VM has no GPU driver and VTK segfaults in its basic OpenGL; the 3D view
+          # is checked on the Linux (Mesa) and macOS runners instead.
+          SATLINK_SELFTEST_NO_3D: "1"
         run: |
           $out = Join-Path $PWD "selftest"
           $p = Start-Process "dist\Sat-Link\Sat-Link.exe" -ArgumentList "--self-test", "`"$out`"" -PassThru
